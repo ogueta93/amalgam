@@ -1,0 +1,5 @@
+# This file containt the cache configuration data
+
+connection: 'memcached://localhost:11211'
+compression: true
+serializer: 'igbinary'

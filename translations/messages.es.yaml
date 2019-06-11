@@ -1,0 +1,7 @@
+#translations/messages.es.yaml
+
+#errors
+actionDoesNotExists: 'La acción no existe'
+invalidCredentials: 'Los credenciales introducidos son inválidos'
+noValidToken: 'El token a caducado o no es válido'
+notValidDataOnWsService: 'Los datos enviados en el servicio no son válidos'

@@ -1,0 +1,43 @@
+# This file containt the ws Server routes
+
+#Auth routes
+login:
+    service: App\Service\WsServerApp\WsSecurity
+    method: login
+    tokenSecurity: false
+
+# Battle routes
+newBattle:
+    service: App\Business\BattleBusiness
+    method: newBattle
+
+findBattle:
+    service: App\Business\BattleBusiness
+    method: findBattle
+
+# BattleList routes
+getUserBattleList:
+    service: App\Business\ListBattleBusiness
+    method: getUserBattleList
+
+refuseBattle:
+    service: App\Business\ListBattleBusiness
+    method: refuseBattle
+
+acceptBattle:
+    service: App\Business\ListBattleBusiness
+    method: acceptBattle
+
+# Cards routes
+getUserCards:
+    service: App\Business\CardBusiness
+    method: getUserCards
+
+addCard:
+    service: App\Business\CardBusiness
+    method: addCard
+
+#User routes
+getUsers:
+    service: App\Business\UserBusiness
+    method: getUsers

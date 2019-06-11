@@ -1,0 +1,5 @@
+# This file containt the Jwt configuration data
+
+privateKey: 'private.pem'
+publicKey: 'public.pem'
+secretKey: 'YW1hbGdhbQ'
