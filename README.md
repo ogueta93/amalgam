@@ -1,5 +1,6 @@
 # amalgam
-Backend based on websocketsusing a symfony base for amalgam proyect
+Backend based on websocketsusing a symfony base for amalgam proyect 
+
 Php Framework: https://symfony.com/
 Rachet Websocket: http://socketo.me/
 
