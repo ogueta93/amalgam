@@ -110,7 +110,7 @@ class ListBattleBusiness
         $this->em->flush();
 
         $this->cache->set(
-            sprintf(CacheType::BATTLE, $content['battleId']),
+            sprintf(CacheType::BATTLE, $battleEnt->getId()),
             \json_encode($data),
             (new \DateTime('tomorrow'))->getTimestamp()
         );
