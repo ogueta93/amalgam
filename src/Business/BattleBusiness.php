@@ -99,7 +99,7 @@ class BattleBusiness
         $this->data = $NewBattleLogic->process();
         $this->battleId = (int) $this->data['id'];
 
-        $this->save();
+        $this->save(false);
 
         $clients = [];
         foreach ($this->data['users'] as $key => $user) {
@@ -117,23 +117,29 @@ class BattleBusiness
     /**
      * Save battle on database and cache
      *
+     * @param bool $cache
      * @return void
      */
-    protected function save()
+    protected function save($cache = true)
     {
         $data = \json_encode($this->data);
 
         if ($this->battleId) {
             $this->battleEnt = $this->battleEnt ?? $this->em->getRepository(Battle::class)->find($this->battleId);
-            $this->battleEnt->setData($data);
 
-            $this->cache->set(
-                sprintf(CacheType::BATTLE, $this->battleId),
-                $data,
-                (new \DateTime('tomorrow'))->getTimestamp()
-            );
+            if ($this->battleEnt) {
+                $this->battleEnt->setData($data);
 
-            $this->em->flush();
+                if ($cache) {
+                    $this->cache->set(
+                        sprintf(CacheType::BATTLE, $this->battleId),
+                        $data,
+                        (new \DateTime('tomorrow'))->getTimestamp()
+                    );
+                }
+
+                $this->em->flush();
+            }
         }
     }
 

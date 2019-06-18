@@ -56,7 +56,7 @@ class CardManager
         $cards = $qb->getQuery()->getResult();
 
         $data = \array_map(function ($card) {
-            return $card->getIdCard()->toArray();
+            return \array_merge(['userCardId' => $card->getId()], $card->getIdCard()->toArray());
         }, $cards);
 
         return $data;

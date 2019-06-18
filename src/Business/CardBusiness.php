@@ -41,7 +41,7 @@ class CardBusiness
         $cardManager = $this->container->get(CardManager::class);
         $data = $cardManager->getByFilters($user->getId(), $content);
 
-        sleep(2);
+        sleep(1);
         $this->addWsResponseData($data);
     }
 

@@ -9,6 +9,8 @@ use App\Business\Battle\Notification\BattleNotification;
 use App\Entity\Battle;
 use App\Entity\UserBattle;
 use App\Manager\ListBattleManager;
+use App\Service\Cache;
+use App\Service\Cache\CacheType;
 use App\Service\WsServerApp\Traits\WsUtilsTrait;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Container\ContainerInterface;
@@ -22,6 +24,7 @@ class ListBattleBusiness
     protected $container;
     protected $em;
     protected $security;
+    protected $cache;
 
     /** Properties */
 
@@ -31,6 +34,7 @@ class ListBattleBusiness
         $this->em = $em;
         $this->security = $security;
         $this->battleException = new BattleException();
+        $this->cache = $this->container->get(Cache::class)->getClient();
     }
 
     /**
@@ -102,8 +106,14 @@ class ListBattleBusiness
         $data = $NewBattleLogic->process();
 
         $battleEnt = $this->em->getRepository(Battle::class)->find($content['battleId']);
-        $battleEnt->setData(\json_encode($data, true));
+        $battleEnt->setData(\json_encode($data));
         $this->em->flush();
+
+        $this->cache->set(
+            sprintf(CacheType::BATTLE, $battleEnt->getId()),
+            \json_encode($data),
+            (new \DateTime('tomorrow'))->getTimestamp()
+        );
 
         $clients = [];
         foreach ($data['users'] as $key => $user) {
