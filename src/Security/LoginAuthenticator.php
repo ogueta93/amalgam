@@ -103,8 +103,6 @@ class LoginAuthenticator extends AbstractGuardAuthenticator
         $data = [
             'message' => strtr($exception->getMessageKey(), $exception->getMessageData()),
             'phase' => 'default'
-            // or to translate this message
-            // $this->translator->trans($exception->getMessageKey(), $exception->getMessageData())
         ];
 
         return new JsonResponse($data, Response::HTTP_FORBIDDEN);
@@ -116,7 +114,6 @@ class LoginAuthenticator extends AbstractGuardAuthenticator
     public function start(Request $request, AuthenticationException $authException = null)
     {
         $data = [
-            // you might translate this message
             'message' => 'Authentication Required'
         ];
 

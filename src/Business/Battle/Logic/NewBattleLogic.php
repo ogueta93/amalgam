@@ -4,7 +4,7 @@ namespace App\Business\Battle\Logic;
 
 use App\Business\Battle\AbstractBattleLogic;
 use App\Business\Battle\BattleException;
-use App\Business\Battle\Builder\NewBattleBuilder;
+use App\Business\Battle\Builder\BattleBuilder;
 use App\Business\Battle\Constant\BattleStatusConstant;
 use App\Entity\Battle;
 use App\Entity\BattleStatus;
@@ -62,15 +62,15 @@ class NewBattleLogic extends AbstractBattleLogic
      */
     public function doIt()
     {
-        $this->data['today'] = new \DateTime();
+        $today = new \DateTime();
 
         /** Creating Battle */
         $newBattle = new Battle();
         $newBattle->setBattleType($this->data['BattleType']);
         $newBattle->setBattleStatus($this->data['BattleStatus']);
         $newBattle->setData(\json_encode([]));
-        $newBattle->setCreatedAt($this->data['today']);
-        $newBattle->setUpdatedAt($this->data['today']);
+        $newBattle->setCreatedAt($today);
+        $newBattle->setUpdatedAt($today);
         $newBattle->setDeletedAt(null);
 
         $this->em->persist($newBattle);
@@ -81,8 +81,8 @@ class NewBattleLogic extends AbstractBattleLogic
             $userBattle = new UserBattle();
             $userBattle->setUser($user);
             $userBattle->setBattle($newBattle);
-            $userBattle->setCreatedAt($this->data['today']);
-            $userBattle->setUpdatedAt($this->data['today']);
+            $userBattle->setCreatedAt($today);
+            $userBattle->setUpdatedAt($today);
             $userBattle->setDeletedAt(null);
 
             $this->em->persist($userBattle);
@@ -100,18 +100,8 @@ class NewBattleLogic extends AbstractBattleLogic
                 'name' => $this->data['BattleStatus']->getName()
             ]
         ];
-    }
 
-    /**
-     * Builts data
-     *
-     * @return void
-     */
-    protected function buildIt()
-    {
-        $newBattleBuilder = new NewBattleBuilder();
-        $newBattleBuilder->setParams($this->data, []);
-
-        $this->battleData = $newBattleBuilder->work();
+        $battleBuilder = new BattleBuilder();
+        $this->battleData = $battleBuilder->createBattleBase($this->battleData, $this->data);
     }
 }

@@ -46,13 +46,6 @@ abstract class AbstractBattleLogic
     abstract protected function doIt();
 
     /**
-     * Builts data
-     *
-     * @return void
-     */
-    abstract protected function buildIt();
-
-    /**
      * Sets inputData and battleData properties
      *
      * @param array $inputData
@@ -76,8 +69,7 @@ abstract class AbstractBattleLogic
     {
         $this->proveIt();
         $this->doIt();
-        $this->buildIt();
-
+        
         return $this->getBattleData();
     }
 

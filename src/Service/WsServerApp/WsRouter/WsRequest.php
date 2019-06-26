@@ -7,7 +7,6 @@ use Doctrine\ORM\EntityManagerInterface;
 use Psr\Container\ContainerInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Core\Security;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 class WsRequest
 {
@@ -15,7 +14,6 @@ class WsRequest
     protected $container;
     protected $em;
     protected $security;
-    protected $translator;
 
     protected $data;
 
@@ -27,12 +25,11 @@ class WsRequest
     const AVAILABLE_FIELDS = ['a', 'c', 't', 'ev'];
     const ENVIRONMENT_AVAILABLE_FIELDS = ['l'];
 
-    public function __construct(ContainerInterface $container, EntityManagerInterface $em = null, Security $security = null, TranslatorInterface $translator = null)
+    public function __construct(ContainerInterface $container, EntityManagerInterface $em = null, Security $security = null)
     {
         $this->container = $container;
         $this->em = $em;
         $this->security = $security;
-        $this->translator = $translator;
     }
 
     /**
@@ -122,7 +119,7 @@ class WsRequest
 
         if ($injectedParam || !isset($this->data['a'])) {
             throw new WsException(Response::HTTP_BAD_REQUEST, [
-                'message' => $this->translator->trans('notValidDataOnWsService')
+                'message' => WsException::MSG_NOT_VALID_DAT_ON_WS_SERVICE
             ]);
         }
 
@@ -139,7 +136,7 @@ class WsRequest
 
             if ($envInjectedParam) {
                 throw new WsException(Response::HTTP_BAD_REQUEST, [
-                    'message' => $this->translator->trans('notValidDataOnWsService')
+                    'message' => WsException::MSG_NOT_VALID_DAT_ON_WS_SERVICE
                 ]);
             }
         }

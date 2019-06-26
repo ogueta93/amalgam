@@ -83,7 +83,7 @@ class WsRouter extends AbstractService
 
         if (!\array_key_exists($this->wsRequest->getAction(), $this->routes)) {
             throw new WsException(Response::HTTP_BAD_REQUEST, [
-                'message' => $this->translator->trans('actionDoesNotExists')
+                'message' => WsException::MSG_ACTION_NOT_EXISTS
             ]);
         }
 

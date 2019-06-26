@@ -6,11 +6,11 @@ use App\Business\Battle\BattleException;
 use App\Business\Battle\Constant\BattleStatusConstant;
 use App\Business\Battle\Logic\AcceptNewBattleLogic;
 use App\Business\Battle\Notification\BattleNotification;
+use App\Business\Battle\Traits\BattleUtilsTrait;
 use App\Entity\Battle;
 use App\Entity\UserBattle;
 use App\Manager\ListBattleManager;
 use App\Service\Cache;
-use App\Service\Cache\CacheType;
 use App\Service\WsServerApp\Traits\WsUtilsTrait;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Container\ContainerInterface;
@@ -18,6 +18,7 @@ use Symfony\Component\Security\Core\Security;
 
 class ListBattleBusiness
 {
+    use BattleUtilsTrait;
     use WsUtilsTrait;
 
     /** Symfony Services */
@@ -101,33 +102,22 @@ class ListBattleBusiness
      */
     public function acceptBattle($content)
     {
-        $NewBattleLogic = $this->container->get(AcceptNewBattleLogic::class);
-        $NewBattleLogic->setParams($content, []);
-        $data = $NewBattleLogic->process();
+        $this->battleId = (int) $content['battleId'] ?? null;
+        $this->data = $this->quickBattleData();
 
-        $battleEnt = $this->em->getRepository(Battle::class)->find($content['battleId']);
-        $battleEnt->setData(\json_encode($data));
-        $this->em->flush();
+        $acceptNewBattleLogic = $this->container->get(AcceptNewBattleLogic::class);
+        $acceptNewBattleLogic->setParams($content, $this->data);
+        $this->data = $acceptNewBattleLogic->process();
 
-        $this->cache->set(
-            sprintf(CacheType::BATTLE, $battleEnt->getId()),
-            \json_encode($data),
-            (new \DateTime('tomorrow'))->getTimestamp()
-        );
+        $this->save();
 
-        $clients = [];
-        foreach ($data['users'] as $key => $user) {
-            if ($this->getLoggedUser()->getId() != $user['user']['id']) {
-                $clients[] = ['id' => $user['user']['id']];
-            }
-        }
-
-        $this->addWsResponseData($data, $clients);
+        $clients = $this->getRivalsFromData();
+        $this->addWsResponseData($this->data, $clients);
 
         $notificationData = [
-            'id' => $data['id'],
+            'id' => $this->data['id'],
             'acceptedBy' => $this->getLoggedUser()->toArray(),
-            'type' => $data['type']
+            'type' => $this->data['type']
         ];
         $battleNotification = new BattleNotification($notificationData, $clients, BattleNotification::ACCEPT_BATTLE);
         $battleNotification->notify();

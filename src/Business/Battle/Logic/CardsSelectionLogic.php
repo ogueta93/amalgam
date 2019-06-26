@@ -15,7 +15,6 @@ class CardsSelectionLogic extends AbstractBattleLogic
 {
     use WsUtilsTrait;
 
-    const FORMAT_DATE = 'Y-m-d H:i:s';
     const NUM_CARDS_SELECTED = 5;
 
     /**
@@ -61,20 +60,7 @@ class CardsSelectionLogic extends AbstractBattleLogic
      */
     public function doIt()
     {
-        $today = new \DateTime();
         $battleBuilder = new BattleBuilder();
-
         $this->battleData = $battleBuilder->addUserCardsSelection($this->battleData, $this->data['userCardsSelected']);
-        $this->battleData['lastChange'] = $today->format(self::FORMAT_DATE);
-    }
-
-    /**
-     * Builts data
-     *
-     * @return void
-     */
-    protected function buildIt()
-    {
-        //TODO: Remove this function after AbstractBattleLogic Rewor
     }
 }

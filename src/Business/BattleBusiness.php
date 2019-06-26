@@ -3,21 +3,21 @@
 namespace App\Business;
 
 use App\Business\Battle\BattleException;
-use App\Business\Battle\Logic\NewBattleLogic;
+use App\Business\Battle\Constant\BattleMainProgressPhaseConstant;
 use App\Business\Battle\Logic\CardsSelectionLogic;
+use App\Business\Battle\Logic\NewBattleLogic;
 use App\Business\Battle\Notification\BattleNotification;
+use App\Business\Battle\Traits\BattleUtilsTrait;
 use App\Entity\Battle;
-use App\Entity\UserBattle;
 use App\Service\Cache;
-use App\Service\Cache\CacheType;
 use App\Service\WsServerApp\Traits\WsUtilsTrait;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Container\ContainerInterface;
 use Symfony\Component\Security\Core\Security;
-use App\Business\Battle\Constant\BattleMainProgressPhaseConstant;
 
 class BattleBusiness
 {
+    use BattleUtilsTrait;
     use WsUtilsTrait;
 
     /** Symfony Services */
@@ -26,31 +26,15 @@ class BattleBusiness
     protected $security;
 
     /** Object Properties */
-    protected $battleEnt;
     protected $cache;
-
-    /** Properties */
-    protected $battleId;
-    protected $data;
 
     public function __construct(ContainerInterface $container, EntityManagerInterface $em, Security $security)
     {
         $this->container = $container;
         $this->em = $em;
         $this->security = $security;
+        $this->battleException = new BattleException();
         $this->cache = $this->container->get(Cache::class)->getClient();
-    }
-
-    /**
-     * Resets fundamental properties
-     *
-     * @return void
-     */
-    public function reset()
-    {
-        $this->data = null;
-        $this->battleId = null;
-        $this->battleEnt = null;
     }
 
     /**
@@ -105,13 +89,7 @@ class BattleBusiness
 
         $this->save(false);
 
-        $clients = [];
-        foreach ($this->data['users'] as $key => $user) {
-            if ($this->getLoggedUser()->getId() != $user['user']['id']) {
-                $clients[] = ['id' => $user['user']['id']];
-            }
-        }
-
+        $clients = $this->getRivalsFromData();
         $this->addWsResponseData($this->data, $clients);
 
         $battleNotification = new BattleNotification($this->data, $clients, BattleNotification::NEW_BATTLE);
@@ -138,70 +116,9 @@ class BattleBusiness
 
         $clients = null;
         if ($this->data['progress']['main']['phase'] === BattleMainProgressPhaseConstant::COIN_THROW_PHASE) {
-            $clients = [];
-            foreach ($this->data['users'] as $key => $user) {
-                if ($this->getLoggedUser()->getId() != $user['user']['id']) {
-                    $clients[] = ['id' => $user['user']['id']];
-                }
-            }
+            $clients = $this->getRivalsFromData();
         }
 
         $this->addWsResponseData($this->data, $clients);
-    }
-
-    /**
-     * Save battle on database and cache
-     *
-     * @param bool $cache
-     * @return void
-     */
-    protected function save($cache = true)
-    {
-        $data = \json_encode($this->data);
-
-        if ($this->battleId) {
-            $this->battleEnt = $this->battleEnt ?? $this->em->getRepository(Battle::class)->find($this->battleId);
-
-            if ($this->battleEnt) {
-                $this->battleEnt->setData($data);
-
-                if ($cache) {
-                    $this->cache->set(
-                        sprintf(CacheType::BATTLE, $this->battleId),
-                        $data,
-                        (new \DateTime('tomorrow'))->getTimestamp()
-                    );
-                }
-
-                $this->em->flush();
-            }
-        }
-    }
-
-    /**
-     * Gets battle data by the quickets way
-     *
-     * @return array
-     */
-    protected function quickBattleData()
-    {
-        $battleEnt = $this->em->getRepository(Battle::class)->find((int) $this->battleId);
-        if (!$battleEnt) {
-            $this->battleException->throwError(BattleException::GENERIC_NOT_FOUND_ELEMENT);
-        }
-
-        $userBattle = $this->em->getRepository(UserBattle::class)->findBy(['user' => $this->getLoggedUser(), 'battle' => $battleEnt]);
-        if (!$userBattle) {
-            $this->battleException->throwError(BattleException::GENERIC_SECURITY_ERROR);
-        }
-
-        $this->battleEnt = $battleEnt;
-
-        $data = $this->cache->get(sprintf(CacheType::BATTLE, (int) $this->battleId));
-        if (!$data) {
-            $data = $battleEnt->getData();
-        }
-
-        return \json_decode($data, true);
     }
 }

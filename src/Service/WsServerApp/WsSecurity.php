@@ -35,7 +35,7 @@ class WsSecurity extends AbstractService
         }
 
         throw new WsException(Response::HTTP_FORBIDDEN, [
-            'message' => $this->translator->trans('invalidCredentials')
+            'message' => WsException::MSG_INVALID_CREDENTIALS
         ]);
     }
 
@@ -64,7 +64,7 @@ class WsSecurity extends AbstractService
             }
         } else {
             throw new WsException(Response::HTTP_FORBIDDEN, [
-                'message' => $this->translator->trans('noValidToken'),
+                'message' => WsException::MSG_NOT_VALID_TOKEN,
                 'phase' => WsException::WS_AMALGAN_PHASE_FATAL_ERROR
             ]);
         }

@@ -2,17 +2,14 @@
 // src/Base/Entity/AbstractEntity.php
 namespace App\Base\Entity;
 
-use Symfony\Contracts\Translation\TranslatorInterface;
-
 abstract class AbstractEntity
 {
     /**
      * Gets the entity data in array
      *
-     * @param TranslatorInterface $translator
      * @return array
      */
-    abstract public function toArray(TranslatorInterface $translator);
+    abstract public function toArray();
 
     /**
      * Gets a transformDate with format

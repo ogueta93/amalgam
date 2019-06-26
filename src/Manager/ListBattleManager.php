@@ -8,7 +8,6 @@ use App\Entity\UserBattle;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Container\ContainerInterface;
 use Symfony\Component\Security\Core\Security;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 class ListBattleManager
 {
@@ -20,12 +19,11 @@ class ListBattleManager
     /** Object Properties */
     protected $validFilters = ['type'];
 
-    public function __construct(ContainerInterface $container, EntityManagerInterface $em, Security $security, TranslatorInterface $translator)
+    public function __construct(ContainerInterface $container, EntityManagerInterface $em, Security $security)
     {
         $this->container = $container;
         $this->em = $em;
         $this->security = $security;
-        $this->translator = $translator;
     }
 
     /**
@@ -54,10 +52,8 @@ class ListBattleManager
 
         $battles = $qb->getQuery()->getResult();
 
-        $translator = $this->translator;
-
-        $data = \array_map(function ($battle) use ($translator) {
-            return $battle->getBattle()->toArray($translator);
+        $data = \array_map(function ($battle) {
+            return $battle->getBattle()->toArray();
         }, $battles);
 
         return $data;
