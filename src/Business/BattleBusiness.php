@@ -2,15 +2,19 @@
 // src/Business/BattleBusiness.php
 namespace App\Business;
 
+use App\Business\Battle\BattleException;
 use App\Business\Battle\Logic\NewBattleLogic;
+use App\Business\Battle\Logic\CardsSelectionLogic;
 use App\Business\Battle\Notification\BattleNotification;
 use App\Entity\Battle;
+use App\Entity\UserBattle;
 use App\Service\Cache;
 use App\Service\Cache\CacheType;
 use App\Service\WsServerApp\Traits\WsUtilsTrait;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Container\ContainerInterface;
 use Symfony\Component\Security\Core\Security;
+use App\Business\Battle\Constant\BattleMainProgressPhaseConstant;
 
 class BattleBusiness
 {
@@ -67,7 +71,7 @@ class BattleBusiness
      */
     public function findBattle($data)
     {
-        $this->battleId = (int) $data['battleId'];
+        $this->battleId = (int) $data['battleId'] ?? null;
         $this->data = $this->quickBattleData();
 
         $this->save();
@@ -93,10 +97,10 @@ class BattleBusiness
      */
     public function newBattle(array $data)
     {
-        $NewBattleLogic = $this->container->get(NewBattleLogic::class);
-        $NewBattleLogic->setParams($data, []);
+        $newBattleLogic = $this->container->get(NewBattleLogic::class);
+        $newBattleLogic->setParams($data, []);
 
-        $this->data = $NewBattleLogic->process();
+        $this->data = $newBattleLogic->process();
         $this->battleId = (int) $this->data['id'];
 
         $this->save(false);
@@ -112,6 +116,37 @@ class BattleBusiness
 
         $battleNotification = new BattleNotification($this->data, $clients, BattleNotification::NEW_BATTLE);
         $battleNotification->notify();
+    }
+
+    /**
+     * Set cards for a battle
+     *
+     * @param array $data => @param int battleId, @param array cardsSelected
+     *
+     * @return void
+     */
+    public function setCardsSelection(array $data)
+    {
+        $this->battleId = (int) $data['battleId'] ?? null;
+        $this->data = $this->quickBattleData();
+
+        $cardsSelectionLogic = $this->container->get(CardsSelectionLogic::class);
+        $cardsSelectionLogic->setParams($data, $this->data);
+
+        $this->data = $cardsSelectionLogic->process();
+        $this->save();
+
+        $clients = null;
+        if ($this->data['progress']['main']['phase'] === BattleMainProgressPhaseConstant::COIN_THROW_PHASE) {
+            $clients = [];
+            foreach ($this->data['users'] as $key => $user) {
+                if ($this->getLoggedUser()->getId() != $user['user']['id']) {
+                    $clients[] = ['id' => $user['user']['id']];
+                }
+            }
+        }
+
+        $this->addWsResponseData($this->data, $clients);
     }
 
     /**
@@ -150,13 +185,21 @@ class BattleBusiness
      */
     protected function quickBattleData()
     {
-        $data = $this->cache->get(sprintf(CacheType::BATTLE, (int) $this->battleId));
+        $battleEnt = $this->em->getRepository(Battle::class)->find((int) $this->battleId);
+        if (!$battleEnt) {
+            $this->battleException->throwError(BattleException::GENERIC_NOT_FOUND_ELEMENT);
+        }
 
+        $userBattle = $this->em->getRepository(UserBattle::class)->findBy(['user' => $this->getLoggedUser(), 'battle' => $battleEnt]);
+        if (!$userBattle) {
+            $this->battleException->throwError(BattleException::GENERIC_SECURITY_ERROR);
+        }
+
+        $this->battleEnt = $battleEnt;
+
+        $data = $this->cache->get(sprintf(CacheType::BATTLE, (int) $this->battleId));
         if (!$data) {
-            $battleEnt = $this->em->getRepository(Battle::class)->find((int) $this->battleId);
-            if ($battleEnt) {
-                $data = $battleEnt->getData();
-            }
+            $data = $battleEnt->getData();
         }
 
         return \json_decode($data, true);

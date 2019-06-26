@@ -15,6 +15,10 @@ findBattle:
     service: App\Business\BattleBusiness
     method: findBattle
 
+setCardsSelection:
+    service: App\Business\BattleBusiness
+    method: setCardsSelection
+
 # BattleList routes
 getUserBattleList:
     service: App\Business\ListBattleBusiness
