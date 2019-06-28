@@ -17,11 +17,13 @@ class BattleBuilder
     /** Node Constants */
     const NODE_LAST_CHANGE = 'lastChange';
     const NODE_STATUS = 'status';
+    const NODE_USER_ID = 'userId';
 
     const NODE_PROGRESS = 'progress';
     const NODE_PROGRESS_MAIN = 'main';
     const NODE_MAIN_CARDS_SELECTION = 'cardsSelection';
     const NODE_MAIN_PHASE = 'phase';
+    const NODE_MAIN_COIN_THROW = 'cointThrow';
 
     /**
      * Creates a battle base array structure
@@ -82,21 +84,30 @@ class BattleBuilder
      */
     public function addUserCardsSelection(array $battleData, array $cardsSelected): array
     {
-        $selection = [];
-        \array_walk($cardsSelected, function ($card) use (&$selection) {
-            $selection[] = \array_merge(['userCardId' => $card->getId()], $card->getIdCard()->toArray());
-        });
+        $battleData[self::NODE_LAST_CHANGE] = $this->setLastChange();
+
+        $selection = \array_map(function ($card) {
+            return \array_merge(['userCardId' => $card->getId()], $card->getIdCard()->toArray());
+        }, $cardsSelected);
 
         $nodeCardsSelection = $battleData[self::NODE_PROGRESS][self::NODE_PROGRESS_MAIN][self::NODE_MAIN_CARDS_SELECTION] ?? [];
-        $nodeCardsSelection[] = [$this->getLoggedUser()->getId() => $selection];
+        $nodeCardsSelection[] = [
+            self::NODE_USER_ID => $this->getLoggedUser()->getId(),
+            'cards' => $selection,
+            self::NODE_LAST_CHANGE => $this->setLastChange()
+        ];
 
         $battleData[self::NODE_PROGRESS][self::NODE_PROGRESS_MAIN][self::NODE_MAIN_CARDS_SELECTION] = $nodeCardsSelection;
 
         if (\count($nodeCardsSelection) === 2) {
             $battleData[self::NODE_PROGRESS][self::NODE_PROGRESS_MAIN][self::NODE_MAIN_PHASE] = BattleMainProgressPhaseConstant::COIN_THROW_PHASE;
-        }
 
-        $battleData[self::NODE_LAST_CHANGE] = $this->setLastChange();
+            $usersIds = \array_map(function ($element) {
+                return $element['userId'];
+            }, $nodeCardsSelection);
+
+            $battleData[self::NODE_PROGRESS][self::NODE_PROGRESS_MAIN][self::NODE_MAIN_COIN_THROW] = $this->getCoinThrowNode($usersIds);
+        }
 
         return $battleData;
     }
@@ -125,7 +136,7 @@ class BattleBuilder
      * @param array $dataHelper
      * @return array
      */
-    protected function getUsersNode($dataHelper): array
+    protected function getUsersNode(array $dataHelper): array
     {
         $usersNode = [];
 
@@ -135,10 +146,47 @@ class BattleBuilder
             $usersNode[] = [
                 'user' => $user->toArray(),
                 'statusId' => $user->getId() == $mainUserId ? BattleUserStatusConstant::ACCEPTED : BattleUserStatusConstant::PENDING,
-                'lastChange' => $this->setLastChange()
+                self::NODE_LAST_CHANGE => $this->setLastChange()
             ];
         }
 
         return $usersNode;
+    }
+
+    /**
+     * Gets coinThrowNode
+     *
+     * @param array $usersIds
+     *
+     * @return array
+     */
+    protected function getCoinThrowNode(array $usersIds): array
+    {
+        $coinThrowNode = [];
+
+        $randomNumber = \random_int(0, 1);
+        $coinThrowNode[] = $this->getUserCoinThrowNode($usersIds, $randomNumber);
+
+        $nextNumber = $randomNumber === 0 ? 1 : 0;
+        $coinThrowNode[] = $this->getUserCoinThrowNode($usersIds, $nextNumber);
+
+        return $coinThrowNode;
+    }
+
+    /**
+     * Gets coinThrowNode
+     *
+     * @param array $usersIds
+     * @param int $index
+     *
+     * @return array
+     */
+    protected function getUserCoinThrowNode(array $usersIds, int $index): array
+    {
+        return [
+            self::NODE_USER_ID => $usersIds[$index],
+            'checked' => false,
+            self::NODE_LAST_CHANGE => $this->setLastChange()
+        ];
     }
 }

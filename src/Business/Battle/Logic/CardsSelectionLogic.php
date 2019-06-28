@@ -40,10 +40,9 @@ class CardsSelectionLogic extends AbstractBattleLogic
             $this->battleException->throwError(BattleException::GENERIC_SECURITY_ERROR);
         }
 
-        $cardsSelectedIds = [];
-        \array_walk($cardsSelected, function ($element) use (&$cardsSelectedIds) {
-            $cardsSelectedIds[] = $element['userCardId'];
-        });
+        $cardsSelectedIds = \array_map(function ($element) {
+            return $element['userCardId'];
+        }, $cardsSelected);
 
         $userCardsSelected = $this->em->getRepository(UserCard::class)->findBy(['id' => $cardsSelectedIds]);
         if (\count($userCardsSelected) !== self::NUM_CARDS_SELECTED) {
