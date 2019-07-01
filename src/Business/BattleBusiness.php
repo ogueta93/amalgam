@@ -6,6 +6,7 @@ use App\Business\Battle\BattleException;
 use App\Business\Battle\Constant\BattleMainProgressPhaseConstant;
 use App\Business\Battle\Logic\CardsSelectionLogic;
 use App\Business\Battle\Logic\NewBattleLogic;
+use App\Business\Battle\Logic\showCoinThrowLogic;
 use App\Business\Battle\Notification\BattleNotification;
 use App\Business\Battle\Traits\BattleUtilsTrait;
 use App\Entity\Battle;
@@ -116,6 +117,32 @@ class BattleBusiness
 
         $clients = null;
         if ($this->data['progress']['main']['phase'] === BattleMainProgressPhaseConstant::COIN_THROW_PHASE) {
+            $clients = $this->getRivalsFromData();
+        }
+
+        $this->addWsResponseData($this->data, $clients);
+    }
+
+    /**
+     * Set cards for a battle
+     *
+     * @param array $data => @param int battleId
+     *
+     * @return void
+     */
+    public function showThrowAnnouncement($data)
+    {
+        $this->battleId = (int) $data['battleId'] ?? null;
+        $this->data = $this->quickBattleData();
+
+        $showCoinThrowLogic = $this->container->get(showCoinThrowLogic::class);
+        $showCoinThrowLogic->setParams($data, $this->data);
+
+        $this->data = $showCoinThrowLogic->process();
+        $this->save();
+
+        $clients = null;
+        if ($this->data['progress']['main']['phase'] === BattleMainProgressPhaseConstant::BATTLE_PHASE) {
             $clients = $this->getRivalsFromData();
         }
 

@@ -18,6 +18,7 @@ class BattleBuilder
     const NODE_LAST_CHANGE = 'lastChange';
     const NODE_STATUS = 'status';
     const NODE_USER_ID = 'userId';
+    const NODE_CHECKED = 'checked';
 
     const NODE_PROGRESS = 'progress';
     const NODE_PROGRESS_MAIN = 'main';
@@ -113,6 +114,38 @@ class BattleBuilder
     }
 
     /**
+     * Add the user's cards selection to the battleData
+     *
+     * @param array $battleData
+     *
+     * @return array
+     */
+    public function setUserShowCoinThrow($battleData)
+    {
+        $today = new \DateTime();
+        $completeShow = true;
+
+        $battleData[self::NODE_LAST_CHANGE] = $this->setLastChange();
+
+        foreach ($battleData[self::NODE_PROGRESS][self::NODE_PROGRESS_MAIN][self::NODE_MAIN_COIN_THROW] as $key => &$userCoinThrow) {
+            if ($userCoinThrow[self::NODE_USER_ID] === $this->getLoggedUser()->getId()) {
+                $userCoinThrow[self::NODE_CHECKED] = true;
+                $userCoinThrow[self::NODE_LAST_CHANGE] = $this->setLastChange();
+            }
+
+            if ($userCoinThrow[self::NODE_CHECKED] === false) {
+                $completeShow = false;
+            }
+        }
+
+        if ($completeShow) {
+            $battleData[self::NODE_PROGRESS][self::NODE_PROGRESS_MAIN][self::NODE_MAIN_PHASE] = BattleMainProgressPhaseConstant::BATTLE_PHASE;
+        }
+
+        return $battleData;
+    }
+
+    /**
      * Set lastChange date
      *
      * @param array $battleData
@@ -185,7 +218,7 @@ class BattleBuilder
     {
         return [
             self::NODE_USER_ID => $usersIds[$index],
-            'checked' => false,
+            self::NODE_CHECKED => false,
             self::NODE_LAST_CHANGE => $this->setLastChange()
         ];
     }

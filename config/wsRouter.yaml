@@ -19,6 +19,10 @@ setCardsSelection:
     service: App\Business\BattleBusiness
     method: setCardsSelection
 
+showThrowAnnouncement:
+    service: App\Business\BattleBusiness
+    method: showThrowAnnouncement
+
 # BattleList routes
 getUserBattleList:
     service: App\Business\ListBattleBusiness
