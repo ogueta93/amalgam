@@ -23,6 +23,10 @@ showThrowAnnouncement:
     service: App\Business\BattleBusiness
     method: showThrowAnnouncement
 
+battleMovement:
+    service: App\Business\BattleBusiness
+    method: battleMovement
+
 # BattleList routes
 getUserBattleList:
     service: App\Business\ListBattleBusiness

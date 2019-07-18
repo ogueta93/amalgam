@@ -4,6 +4,7 @@ namespace App\Business;
 
 use App\Business\Battle\BattleException;
 use App\Business\Battle\Constant\BattleMainProgressPhaseConstant;
+use App\Business\Battle\Logic\BattleMovementLogic;
 use App\Business\Battle\Logic\CardsSelectionLogic;
 use App\Business\Battle\Logic\NewBattleLogic;
 use App\Business\Battle\Logic\showCoinThrowLogic;
@@ -147,5 +148,26 @@ class BattleBusiness
         }
 
         $this->addWsResponseData($this->data, $clients);
+    }
+
+    /**
+     * Does a battle movement
+     *
+     * @param array $data => @param int battleId, @param int userCardId, @param array coordinates
+     *
+     * @return void
+     */
+    public function battleMovement($data)
+    {
+        $this->battleId = (int) $data['battleId'] ?? null;
+        $this->data = $this->quickBattleData();
+
+        $battleMovementLogic = $this->container->get(BattleMovementLogic::class);
+        $battleMovementLogic->setParams($data, $this->data);
+
+        $this->data = $battleMovementLogic->process();
+        $this->save();
+
+        $this->addWsResponseData($this->data, $this->getRivalsFromData());
     }
 }
