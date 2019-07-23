@@ -3,6 +3,7 @@
 namespace App\Business\Battle\Traits;
 
 use App\Business\Battle\BattleException;
+use App\Business\Battle\Excluder\BattleExcluder;
 use App\Entity\Battle;
 use App\Entity\UserBattle;
 use App\Service\Cache\CacheType;
@@ -44,6 +45,34 @@ trait BattleUtilsTrait
         }
 
         return $clients;
+    }
+
+    /**
+     * Gets filtered data by the user
+     *
+     * @param int $userId
+     * @return array
+     */
+    protected function getFilteredData(int $userId = null): array
+    {
+        $battleExcluder = new BattleExcluder($this->data);
+        return $battleExcluder->exclude(['cardsSelection'], $userId);
+    }
+
+    /**
+     * Gets data filtered by rivals
+     *
+     * @param int $userId
+     * @return array
+     */
+    protected function getFilteredDataFromRivals()
+    {
+        $clientsData = $this->getRivalsFromData();
+        foreach ($clientsData as $key => &$clientData) {
+            $clientData['msg'] = $this->getFilteredData($clientData['id']);
+        }
+
+        return $clientsData;
     }
 
     /**

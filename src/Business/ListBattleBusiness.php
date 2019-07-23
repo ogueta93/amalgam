@@ -51,6 +51,11 @@ class ListBattleBusiness
         $listBattleManager = $this->container->get(ListBattleManager::class);
         $data = $listBattleManager->getActiveListByFilters($user->getId(), $content);
 
+        foreach ($data as $key => &$battle) {
+            $this->data = $battle['data'];
+            $battle['data'] = $this->getFilteredData();
+        }
+
         $this->addWsResponseData($data);
     }
 
@@ -112,7 +117,7 @@ class ListBattleBusiness
         $this->save();
 
         $clients = $this->getRivalsFromData();
-        $this->addWsResponseData($this->data, $clients);
+        $this->addWsResponseData($this->getFilteredData(), $this->getFilteredDataFromRivals());
 
         $notificationData = [
             'id' => $this->data['id'],

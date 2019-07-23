@@ -2,9 +2,11 @@
 // src/Business/CardBusiness.php
 namespace App\Business;
 
+use App\Base\Constant\AppConstant;
 use App\Entity\Card;
 use App\Entity\UserCard;
 use App\Manager\CardManager;
+use App\Service\WsServerApp\Exception\WsException;
 use App\Service\WsServerApp\Traits\WsUtilsTrait;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Container\ContainerInterface;
@@ -31,31 +33,49 @@ class CardBusiness
     /**
      * Gets user cards
      *
-     * @param array $content
+     * @param array @param array filters
      * @return void
      */
-    public function getUserCards($content)
+    public function getUserCards(array $content)
     {
         $user = $this->getLoggedUser();
 
         $cardManager = $this->container->get(CardManager::class);
-        $data = $cardManager->getByFilters($user->getId(), $content);
+        $data = $cardManager->getUserCardsByFilters($user->getId(), $content);
 
-        sleep(1);
+        $this->addWsResponseData($data);
+    }
+
+    /**
+     * Gets game cards
+     *
+     * @param array $content => @param array filters
+     * @return void
+     */
+    public function getGameCards(array $content)
+    {
+        $cardManager = $this->container->get(CardManager::class);
+        $data = $cardManager->getCardsByFilters($content);
+
         $this->addWsResponseData($data);
     }
 
     /**
      * Add cart to loggedUser
      *
-     * @category test
+     * @param array $content => @param int id
      * @return void
      */
-    public function addCard($content)
+    public function addCard(array $content)
     {
-        $msg = null;
-        $cardId = $content['id'] ?? null;
+        if ($this->container->get('kernel')->getEnvironment() !== AppConstant::DEV_ENVIRONMENT) {
+            throw new WsException(Response::HTTP_FORBIDDEN, [
+                'message' => WsException::MSG_NOT_VALID_RIGHTS,
+                'phase' => WsException::WS_AMALGAN_PHASE_FATAL_ERROR
+            ]);
+        }
 
+        $cardId = $content['id'] ?? null;
         if ($cardId) {
             $user = $this->getLoggedUser();
             $card = $this->em->getRepository(Card::class)->find($cardId);
@@ -73,10 +93,8 @@ class CardBusiness
                 $this->em->persist($userCard);
                 $this->em->flush();
 
-                $msg = sprintf('The card with name %s has been added to the user %s', $card->getName(), $user->getEmail());
+                $this->addWsResponseData([true]);
             }
         }
-
-        $this->addWsResponseData([$msg]);
     }
 }

@@ -11,7 +11,8 @@ class WsException extends DataException
     const MSG_INVALID_CREDENTIALS = 'invalidCredentials';
     const MSG_NOT_VALID_TOKEN = 'noValidToken';
     const MSG_ACTION_NOT_EXISTS = 'actionDoesNotExists';
-    const MSG_NOT_VALID_DAT_ON_WS_SERVICE = 'notValidDataOnWsService';
+    const MSG_NOT_VALID_DATA_ON_WS_SERVICE = 'notValidDataOnWsService';
+    const MSG_NOT_VALID_RIGHTS = 'notValidRights';
 
     const WS_AMALGAN_PHASE_FATAL_ERROR = 1;
 }

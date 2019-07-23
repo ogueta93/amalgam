@@ -61,7 +61,7 @@ class BattleBusiness
         $this->data = $this->quickBattleData();
 
         $this->save();
-        $this->addWsResponseData($this->data);
+        $this->addWsResponseData($this->getFilteredData());
     }
 
     /**
@@ -92,7 +92,7 @@ class BattleBusiness
         $this->save(false);
 
         $clients = $this->getRivalsFromData();
-        $this->addWsResponseData($this->data, $clients);
+        $this->addWsResponseData($this->getFilteredData(), $this->getFilteredDataFromRivals());
 
         $battleNotification = new BattleNotification($this->data, $clients, BattleNotification::NEW_BATTLE);
         $battleNotification->notify();
@@ -118,10 +118,10 @@ class BattleBusiness
 
         $clients = null;
         if ($this->data['progress']['main']['phase'] === BattleMainProgressPhaseConstant::COIN_THROW_PHASE) {
-            $clients = $this->getRivalsFromData();
+            $clients = $this->getFilteredDataFromRivals();
         }
 
-        $this->addWsResponseData($this->data, $clients);
+        $this->addWsResponseData($this->getFilteredData(), $clients);
     }
 
     /**
@@ -144,10 +144,10 @@ class BattleBusiness
 
         $clients = null;
         if ($this->data['progress']['main']['phase'] === BattleMainProgressPhaseConstant::BATTLE_PHASE) {
-            $clients = $this->getRivalsFromData();
+            $clients = $this->getFilteredDataFromRivals();
         }
 
-        $this->addWsResponseData($this->data, $clients);
+        $this->addWsResponseData($this->getFilteredData(), $clients);
     }
 
     /**
@@ -168,6 +168,6 @@ class BattleBusiness
         $this->data = $battleMovementLogic->process();
         $this->save();
 
-        $this->addWsResponseData($this->data, $this->getRivalsFromData());
+        $this->addWsResponseData($this->getFilteredData(), $this->getFilteredDataFromRivals());
     }
 }

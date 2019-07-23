@@ -2,6 +2,7 @@
 // src/Manager/CardManager.php
 namespace App\Manager;
 
+use App\Entity\Card;
 use App\Entity\UserCard;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Container\ContainerInterface;
@@ -32,7 +33,7 @@ class CardManager
      *
      * @return array $data
      */
-    public function getByFilters($userId, $filters): array
+    public function getUserCardsByFilters(int $userId, array $filters): array
     {
         $cleanFilters = $this->cleanFilters($filters);
 
@@ -57,6 +58,42 @@ class CardManager
 
         $data = \array_map(function ($card) {
             return \array_merge(['userCardId' => $card->getId()], $card->getIdCard()->toArray());
+        }, $cards);
+
+        return $data;
+    }
+
+    /**
+     * Gets cards by filters
+     *
+     * @param int $userId
+     * @param array filters
+     *
+     * @return array $data
+     */
+    public function getCardsByFilters(array $filters): array
+    {
+        $cleanFilters = $this->cleanFilters($filters);
+
+        $qb = $this->em->createQueryBuilder();
+        $qb
+            ->select('c')
+            ->from(Card::class, 'c')
+            ->where('c.name like :nameCard')
+            ->setParameters([
+                'nameCard' => '%' . $cleanFilters['cardName'] . '%'
+            ]);
+
+        if ($cleanFilters['cardType'] > 0) {
+            $qb
+                ->join('c.type', 'ct', 'WITH', 'ct.id = :cardType')
+                ->setParameter('cardType', $cleanFilters['cardType']);
+        }
+
+        $cards = $qb->getQuery()->getResult();
+
+        $data = \array_map(function ($card) {
+            return $card->toArray();
         }, $cards);
 
         return $data;

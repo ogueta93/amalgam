@@ -59,7 +59,7 @@ class CardsSelectionLogic extends AbstractBattleLogic
      */
     public function doIt()
     {
-        $battleBuilder = new BattleBuilder();
-        $this->battleData = $battleBuilder->addUserCardsSelection($this->battleData, $this->data['userCardsSelected']);
+        $battleBuilder = new BattleBuilder($this->battleData);
+        $this->battleData = $battleBuilder->addUserCardsSelection($this->data['userCardsSelected']);
     }
 }

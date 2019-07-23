@@ -57,7 +57,7 @@ class AcceptNewBattleLogic extends AbstractBattleLogic
         $this->data['battleEnt']->setBattleStatus($battleStatusEnt);
         $this->em->flush();
 
-        $battleBuilder = new BattleBuilder();
-        $this->battleData = $battleBuilder->acceptNewBattle($this->battleData, $battleStatusEnt);
+        $battleBuilder = new BattleBuilder($this->battleData);
+        $this->battleData = $battleBuilder->acceptNewBattle($battleStatusEnt);
     }
 }
