@@ -45,6 +45,10 @@ getUserCards:
     service: App\Business\CardBusiness
     method: getUserCards
 
+getGameCards:
+    service: App\Business\CardBusiness
+    method: getGameCards
+
 addCard:
     service: App\Business\CardBusiness
     method: addCard

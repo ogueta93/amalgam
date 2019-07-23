@@ -44,7 +44,7 @@ class showCoinThrowLogic extends AbstractBattleLogic
      */
     public function doIt()
     {
-        $battleBuilder = new BattleBuilder();
-        $this->battleData = $battleBuilder->setUserShowCoinThrow($this->battleData);
+        $battleBuilder = new BattleBuilder($this->battleData);
+        $this->battleData = $battleBuilder->setUserShowCoinThrow();
     }
 }

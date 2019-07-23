@@ -73,7 +73,8 @@ class BattleBuilder
      * 
      * @param array $battleData
      */
-    public function __construct(array $battleData = []) {
+    public function __construct(array $battleData = []) 
+    {
         $this->battleData = $battleData;
         $this->user = $this->getLoggedUser();
     }
@@ -81,14 +82,12 @@ class BattleBuilder
     /**
      * Creates a battle base array structure
      *
-     * @param array $battleData
      * @param array $dataHelper
-     *
      * @return array
      */
-    public function createBattleBase(array $battleData, array $dataHelper): array
+    public function createBattleBase(array $dataHelper): array
     {
-        $battleData = [
+        $this->battleData = [
             'id' => $dataHelper['battle']['id'],
             'type' => $dataHelper['battle']['type'],
             self::NODE_STATUS => $dataHelper['battle']['status'],
@@ -97,48 +96,42 @@ class BattleBuilder
             self::NODE_LAST_CHANGE => $this->setLastChange()
         ];
 
-        return $battleData;
+        return $this->battleData;
     }
 
     /**
      * Adds the essential information for accepted current battle
      *
-     * @param array $battleData
      * @param BattleStatus $battleStatus
-     *
      * @return array
      */
-    public function acceptNewBattle(array $battleData, BattleStatus $battleStatus): array
+    public function acceptNewBattle(BattleStatus $battleStatus): array
     {
-        $battleData[self::NODE_STATUS] = $battleStatus->toArray();
-        $battleData[self::NODE_LAST_CHANGE] = $this->setLastChange();
+        $this->battleData[self::NODE_STATUS] = $battleStatus->toArray();
+        $this->battleData[self::NODE_LAST_CHANGE] = $this->setLastChange();
 
-        foreach ($battleData['users'] as $key => &$user) {
+        foreach ($this->battleData['users'] as $key => &$user) {
             if ($user['statusId'] == BattleUserStatusConstant::PENDING) {
                 $user['statusId'] = BattleUserStatusConstant::ACCEPTED;
                 $user['lastChange'] = $this->setLastChange();
             }
         }
 
-        $battleData[self::NODE_PROGRESS] = [
+        $this->battleData[self::NODE_PROGRESS] = [
             self::NODE_PROGRESS_MAIN => [self::NODE_MAIN_PHASE => BattleMainProgressPhaseConstant::CARD_SELECTION_PHASE]
         ];
 
-        return $battleData;
+        return $this->battleData;
     }
 
     /**
      * Add the user's cards selection to the battleData
      *
-     * @param array $battleData
      * @param array $cardsSelected
-     *
      * @return array
      */
-    public function addUserCardsSelection(array $battleData, array $cardsSelected): array
+    public function addUserCardsSelection(array $cardsSelected): array
     {
-        $battleData[self::NODE_LAST_CHANGE] = $this->setLastChange();
-
         $selection = \array_map(function ($card) {
             return \array_merge(
                 ['userCardId' => $card->getId()],
@@ -148,43 +141,41 @@ class BattleBuilder
             );
         }, $cardsSelected);
 
-        $nodeCardsSelection = $battleData[self::NODE_PROGRESS][self::NODE_PROGRESS_MAIN][self::NODE_MAIN_CARDS_SELECTION] ?? [];
+        $nodeCardsSelection = $this->battleData[self::NODE_PROGRESS][self::NODE_PROGRESS_MAIN][self::NODE_MAIN_CARDS_SELECTION] ?? [];
         $nodeCardsSelection[] = [
             self::NODE_USER_ID => $this->getLoggedUser()->getId(),
             self::NODE_CARDS => $selection,
             self::NODE_LAST_CHANGE => $this->setLastChange()
         ];
 
-        $battleData[self::NODE_PROGRESS][self::NODE_PROGRESS_MAIN][self::NODE_MAIN_CARDS_SELECTION] = $nodeCardsSelection;
+        $this->battleData[self::NODE_PROGRESS][self::NODE_PROGRESS_MAIN][self::NODE_MAIN_CARDS_SELECTION] = $nodeCardsSelection;
 
         if (\count($nodeCardsSelection) === 2) {
-            $battleData[self::NODE_PROGRESS][self::NODE_PROGRESS_MAIN][self::NODE_MAIN_PHASE] = BattleMainProgressPhaseConstant::COIN_THROW_PHASE;
+            $this->battleData[self::NODE_PROGRESS][self::NODE_PROGRESS_MAIN][self::NODE_MAIN_PHASE] = BattleMainProgressPhaseConstant::COIN_THROW_PHASE;
 
             $usersIds = \array_map(function ($element) {
                 return $element['userId'];
             }, $nodeCardsSelection);
 
-            $battleData[self::NODE_PROGRESS][self::NODE_PROGRESS_MAIN][self::NODE_MAIN_COIN_THROW] = $this->getCoinThrowNode($usersIds);
+            $this->battleData[self::NODE_PROGRESS][self::NODE_PROGRESS_MAIN][self::NODE_MAIN_COIN_THROW] = $this->getCoinThrowNode($usersIds);
         }
 
-        return $battleData;
+        $this->battleData[self::NODE_LAST_CHANGE] = $this->setLastChange();
+
+        return $this->battleData;
     }
 
     /**
      * Add the user's cards selection to the battleData
      *
-     * @param array $battleData
-     *
      * @return array
      */
-    public function setUserShowCoinThrow(array $battleData): array
+    public function setUserShowCoinThrow(): array
     {
         $today = new \DateTime();
         $completeShow = true;
 
-        $battleData[self::NODE_LAST_CHANGE] = $this->setLastChange();
-
-        foreach ($battleData[self::NODE_PROGRESS][self::NODE_PROGRESS_MAIN][self::NODE_MAIN_COIN_THROW] as $key => &$userCoinThrow) {
+        foreach ($this->battleData[self::NODE_PROGRESS][self::NODE_PROGRESS_MAIN][self::NODE_MAIN_COIN_THROW] as $key => &$userCoinThrow) {
             if ($userCoinThrow[self::NODE_USER_ID] === $this->getLoggedUser()->getId()) {
                 $userCoinThrow[self::NODE_CHECKED] = true;
                 $userCoinThrow[self::NODE_LAST_CHANGE] = $this->setLastChange();
@@ -196,11 +187,13 @@ class BattleBuilder
         }
 
         if ($completeShow) {
-            $battleData[self::NODE_PROGRESS][self::NODE_PROGRESS_MAIN][self::NODE_MAIN_PHASE] = BattleMainProgressPhaseConstant::BATTLE_PHASE;
-            $battleData = $this->getBattleFieldBase($battleData);
+            $this->battleData[self::NODE_PROGRESS][self::NODE_PROGRESS_MAIN][self::NODE_MAIN_PHASE] = BattleMainProgressPhaseConstant::BATTLE_PHASE;
+            $this->setBattleFieldBase();
         }
 
-        return $battleData;
+        $this->battleData[self::NODE_LAST_CHANGE] = $this->setLastChange();
+
+        return $this->battleData;
     }
 
     /**
@@ -480,25 +473,28 @@ class BattleBuilder
                 switch ($relativePosition) {
                     case self::NODE_RELATIVE_POSITION_TOP:
                         [$same, $sum] = $this->checkSpecial(
-                            $cardInPlay[self::NODE_CARD][self::NODE_RELATIVE_POSITION_TOP], $cardInBoard[self::NODE_CARD][self::NODE_RELATIVE_POSITION_BOTTOM], $same, $sum);
+                            \hexdec($cardInPlay[self::NODE_CARD][self::NODE_RELATIVE_POSITION_TOP]), \hexdec($cardInBoard[self::NODE_CARD][self::NODE_RELATIVE_POSITION_BOTTOM]), $same, $sum);
                         if ($same || $sum) {
                             $doCapture = true;
                         }
                         break;
                     case self::NODE_RELATIVE_POSITION_RIGHT:
-                        [$same, $sum] = $this->checkSpecial($cardInPlay[self::NODE_CARD][self::NODE_RELATIVE_POSITION_RIGHT], $cardInBoard[self::NODE_CARD][self::NODE_RELATIVE_POSITION_LEFT], $same, $sum);
+                        [$same, $sum] = $this->checkSpecial(
+                            \hexdec($cardInPlay[self::NODE_CARD][self::NODE_RELATIVE_POSITION_RIGHT]), \hexdec($cardInBoard[self::NODE_CARD][self::NODE_RELATIVE_POSITION_LEFT]), $same, $sum);
                         if ($same || $sum) {
                             $doCapture = true;
                         }
                         break;
                     case self::NODE_RELATIVE_POSITION_BOTTOM:
-                        [$same, $sum] = $this->checkSpecial($cardInPlay[self::NODE_CARD][self::NODE_RELATIVE_POSITION_BOTTOM], $cardInBoard[self::NODE_CARD][self::NODE_RELATIVE_POSITION_TOP], $same, $sum);
+                        [$same, $sum] = $this->checkSpecial(
+                            \hexdec($cardInPlay[self::NODE_CARD][self::NODE_RELATIVE_POSITION_BOTTOM]), \hexdec($cardInBoard[self::NODE_CARD][self::NODE_RELATIVE_POSITION_TOP]), $same, $sum);
                         if ($same || $sum) {
                             $doCapture = true;
                         }
                         break;
                     case self::NODE_RELATIVE_POSITION_LEFT:
-                        [$same, $sum] = $this->checkSpecial($cardInPlay[self::NODE_CARD][self::NODE_RELATIVE_POSITION_LEFT], $cardInBoard[self::NODE_CARD][self::NODE_RELATIVE_POSITION_RIGHT], $same, $sum);
+                        [$same, $sum] = $this->checkSpecial(
+                            \hexdec($cardInPlay[self::NODE_CARD][self::NODE_RELATIVE_POSITION_LEFT]), \hexdec($cardInBoard[self::NODE_CARD][self::NODE_RELATIVE_POSITION_RIGHT]), $same, $sum);
                         if ($same || $sum) {
                             $doCapture = true;
                         }
@@ -512,22 +508,22 @@ class BattleBuilder
             } else {
                 switch ($relativePosition) {
                     case self::NODE_RELATIVE_POSITION_TOP:
-                        if ($cardInPlay[self::NODE_CARD][self::NODE_RELATIVE_POSITION_TOP] > $cardInBoard[self::NODE_CARD][self::NODE_RELATIVE_POSITION_BOTTOM]) {
+                        if (\hexdec($cardInPlay[self::NODE_CARD][self::NODE_RELATIVE_POSITION_TOP]) > \hexdec($cardInBoard[self::NODE_CARD][self::NODE_RELATIVE_POSITION_BOTTOM])) {
                             $doCapture = true;
                         }
                         break;
                     case self::NODE_RELATIVE_POSITION_RIGHT:
-                        if ($cardInPlay[self::NODE_CARD][self::NODE_RELATIVE_POSITION_RIGHT] > $cardInBoard[self::NODE_CARD][self::NODE_RELATIVE_POSITION_LEFT]) {
+                        if (\hexdec($cardInPlay[self::NODE_CARD][self::NODE_RELATIVE_POSITION_RIGHT]) > \hexdec($cardInBoard[self::NODE_CARD][self::NODE_RELATIVE_POSITION_LEFT])) {
                             $doCapture = true;
                         }
                         break;
                     case self::NODE_RELATIVE_POSITION_BOTTOM:
-                        if ($cardInPlay[self::NODE_CARD][self::NODE_RELATIVE_POSITION_BOTTOM] > $cardInBoard[self::NODE_CARD][self::NODE_RELATIVE_POSITION_TOP]) {
+                        if (\hexdec($cardInPlay[self::NODE_CARD][self::NODE_RELATIVE_POSITION_BOTTOM]) > \hexdec($cardInBoard[self::NODE_CARD][self::NODE_RELATIVE_POSITION_TOP])) {
                             $doCapture = true;
                         }
                         break;
                     case self::NODE_RELATIVE_POSITION_LEFT:
-                        if ($cardInPlay[self::NODE_CARD][self::NODE_RELATIVE_POSITION_LEFT] > $cardInBoard[self::NODE_CARD][self::NODE_RELATIVE_POSITION_RIGHT]) {
+                        if (\hexdec($cardInPlay[self::NODE_CARD][self::NODE_RELATIVE_POSITION_LEFT]) > \hexdec($cardInBoard[self::NODE_CARD][self::NODE_RELATIVE_POSITION_RIGHT])) {
                             $doCapture = true;
                         }
                         break;
@@ -600,7 +596,6 @@ class BattleBuilder
      * Gets coinThrowNode
      *
      * @param array $usersIds
-     *
      * @return array
      */
     protected function getCoinThrowNode(array $usersIds): array
@@ -636,13 +631,10 @@ class BattleBuilder
     /**
      * Gets batteFieldBase nodes
      *
-     * @param array $battleData
-     *
-     * @return array
      */
-    protected function getBattleFieldBase(array $battleData): array
+    protected function setBattleFieldBase()
     {
-        $battleData[self::NODE_PROGRESS][self::NODE_MAIN_BATTLE_FIELD] = [
+        $this->battleData[self::NODE_PROGRESS][self::NODE_MAIN_BATTLE_FIELD] = [
             self::NODE_BATTLE_BOARD => [
                 [new \stdClass, new \stdClass, new \stdClass],
                 [new \stdClass, new \stdClass, new \stdClass],
@@ -651,12 +643,10 @@ class BattleBuilder
             self::NODE_LAST_CHANGE => $this->setLastChange()
         ];
 
-        $userId = $battleData[self::NODE_PROGRESS][self::NODE_PROGRESS_MAIN][self::NODE_MAIN_COIN_THROW][0][self::NODE_USER_ID];
-        $battleData[self::NODE_PROGRESS][self::NODE_PROGRESS_TURNS] = [
+        $userId = $this->battleData[self::NODE_PROGRESS][self::NODE_PROGRESS_MAIN][self::NODE_MAIN_COIN_THROW][0][self::NODE_USER_ID];
+        $this->battleData[self::NODE_PROGRESS][self::NODE_PROGRESS_TURNS] = [
             $this->addNewTurn($userId)
         ];
-
-        return $battleData;
     }
 
     /**
@@ -680,19 +670,12 @@ class BattleBuilder
     /**
      * Set lastChange date
      *
-     * @param array $battleData
-     * @return array|string
      */
-    protected function setLastChange($battleData = null)
+    protected function setLastChange()
     {
         $today = new \DateTime();
 
-        if (\is_null($battleData)) {
-            return $today->format(self::FORMAT_DATE);
-        }
-
-        $battleData[self::NODE_LAST_CHANGE] = $today->format(self::FORMAT_DATE);
-        return $battleData;
+        return $today->format(self::FORMAT_DATE);
     }
 
     /**

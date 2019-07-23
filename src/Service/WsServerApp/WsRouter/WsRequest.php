@@ -119,7 +119,7 @@ class WsRequest
 
         if ($injectedParam || !isset($this->data['a'])) {
             throw new WsException(Response::HTTP_BAD_REQUEST, [
-                'message' => WsException::MSG_NOT_VALID_DAT_ON_WS_SERVICE
+                'message' => WsException::MSG_NOT_VALID_DATA_ON_WS_SERVICE
             ]);
         }
 
@@ -136,7 +136,7 @@ class WsRequest
 
             if ($envInjectedParam) {
                 throw new WsException(Response::HTTP_BAD_REQUEST, [
-                    'message' => WsException::MSG_NOT_VALID_DAT_ON_WS_SERVICE
+                    'message' => WsException::MSG_NOT_VALID_DATA_ON_WS_SERVICE
                 ]);
             }
         }

@@ -101,7 +101,7 @@ class NewBattleLogic extends AbstractBattleLogic
             ]
         ];
 
-        $battleBuilder = new BattleBuilder();
-        $this->battleData = $battleBuilder->createBattleBase($this->battleData, $this->data);
+        $battleBuilder = new BattleBuilder($this->battleData);
+        $this->battleData = $battleBuilder->createBattleBase($this->data);
     }
 }
