@@ -6,6 +6,17 @@ login:
     method: login
     tokenSecurity: false
 
+checkSecureConnection:
+    service: App\Service\WsServerApp\WsSecurity
+    method: checkSecureConnection
+    tokenSecurity: true
+
+#Register routes
+register:
+    service: App\Business\RegisterBusiness
+    method: register
+    tokenSecurity: false
+
 # Battle routes
 newBattle:
     service: App\Business\BattleBusiness

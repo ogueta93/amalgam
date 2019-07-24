@@ -61,7 +61,12 @@ services:
     App\Business\CardBusiness:
         public: true
         arguments: ['@service_container', '@doctrine.orm.entity_manager', '@security.helper']
-    
+
+    #Register Service
+    App\Business\RegisterBusiness:
+        public: true
+        arguments: ['@service_container', '@doctrine.orm.entity_manager', '@security.helper']
+
     # User Business
     App\Business\UserBusiness:
         public: true
