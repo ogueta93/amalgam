@@ -40,6 +40,16 @@ class WsSecurity extends AbstractService
     }
 
     /**
+     * Route for check if the connection is safe
+     *
+     * @return void
+     */
+    public function checkSecureConnection()
+    {
+        $this->addWsResponseData($this->getLoggedUser()->toArray());
+    }
+
+    /**
      * Checks the token provided by argument and updates the token if is valid
      *
      * @param string $token
