@@ -4,26 +4,3 @@
 #index:
 #    path: /
 #    defaults: { _controller: 'App\Controller\DefaultController::index' }
-
-test:
-    path: /game/heroe/{id}
-    controller: App\Controller\TestController::index
-
-orm:
-    path: /game/orm
-    controller: App\Controller\TestController::orm
-
-login:
-    path: /login
-    controller: App\Controller\LoginController::login
-    methods: [POST, GET]
-
-game_new_battle:
-    path: /game/battle/new/
-    controller: App\Controller\BattleController::newBattle
-    methods: [POST]
-
-game_battle_data:
-    path: /game/battle/{id}
-    controller: App\Controller\BattleController::getData
-    methods: [GET]
