@@ -461,11 +461,11 @@ class BattleBuilder
         foreach ($boardNeighbours as $relativePosition => $cardInBoard) {
             $doCapture = false;
 
-            if (($cardInBoard[self::NODE_USER_ID] === $cardInPlay[self::NODE_USER_ID]) && !$cardInBoard[self::NODE_CARD][self::NODE_CARD_CAPTURED]) {
+            if (($cardInBoard[self::NODE_USER_ID] === $this->user->getId()) && !$cardInBoard[self::NODE_CARD][self::NODE_CARD_CAPTURED]) {
                 continue;
             }
     
-            if (($cardInBoard[self::NODE_USER_ID] !== $cardInPlay[self::NODE_USER_ID]) && $cardInBoard[self::NODE_CARD][self::NODE_CARD_CAPTURED]) {
+            if (($cardInBoard[self::NODE_USER_ID] !== $this->user->getId()) && $cardInBoard[self::NODE_CARD][self::NODE_CARD_CAPTURED]) {
                 continue;
             }
 
@@ -531,7 +531,7 @@ class BattleBuilder
             }
   
             if($doCapture) {
-                $cardInBoard[self::NODE_CARD][self::NODE_CARD_CAPTURED] = $cardInBoard[self::NODE_USER_ID] !== $cardInPlay[self::NODE_USER_ID] ? true : false;
+                $cardInBoard[self::NODE_CARD][self::NODE_CARD_CAPTURED] = $cardInBoard[self::NODE_USER_ID] !== $this->user->getId() ? true : false;
                 $capturedCards[] = $cardInBoard;
             }
         }
