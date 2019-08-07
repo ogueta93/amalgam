@@ -3,7 +3,7 @@
 namespace App\Command;
 
 use App\Base\Command\AbstractCommand;
-use App\Service\WsServerApp;
+use App\Service\WsServerAppService;
 use Ratchet\Http\HttpServer;
 use Ratchet\Server\IoServer;
 use Ratchet\WebSocket\WsServer;
@@ -24,7 +24,7 @@ class WsServerCommand extends AbstractCommand
     {
         $server = IoServer::factory(new HttpServer(
             new WsServer(
-                $this->container->get(WsServerApp::class)
+                $this->container->get(WsServerAppService::class)
             )
         ), 8080);
 

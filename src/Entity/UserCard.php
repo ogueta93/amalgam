@@ -7,7 +7,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * UserCard
  *
- * @ORM\Table(name="user_card", indexes={@ORM\Index(name="user_card_card_id", columns={"id_card"}), @ORM\Index(name="user_card_user_id", columns={"id_user"})})
+ * @ORM\Table(name="user_card", indexes={@ORM\Index(name="user_card_battle_id", columns={"id_battle"}), @ORM\Index(name="user_card_card_id", columns={"id_card"}), @ORM\Index(name="user_card_user_id", columns={"id_user"})})
  * @ORM\Entity
  */
 class UserCard
@@ -41,6 +41,16 @@ class UserCard
      * @ORM\Column(name="deleted_at", type="datetime", nullable=true, options={"default"="NULL"})
      */
     private $deletedAt = 'NULL';
+
+    /**
+     * @var \Battle
+     *
+     * @ORM\ManyToOne(targetEntity="Battle")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="id_battle", referencedColumnName="id")
+     * })
+     */
+    private $idBattle;
 
     /**
      * @var \Card
@@ -123,6 +133,18 @@ class UserCard
     public function setIdUser(?User $idUser): self
     {
         $this->idUser = $idUser;
+
+        return $this;
+    }
+
+    public function getIdBattle(): ?Battle
+    {
+        return $this->idBattle;
+    }
+
+    public function setIdBattle(?Battle $idBattle): self
+    {
+        $this->idBattle = $idBattle;
 
         return $this;
     }

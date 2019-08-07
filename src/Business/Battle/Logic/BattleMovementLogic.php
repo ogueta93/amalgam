@@ -9,6 +9,7 @@ use App\Business\Battle\Constant\BattleMainProgressPhaseConstant;
 use App\Business\Battle\Constant\BattleStatusConstant;
 use App\Entity\Battle;
 use App\Entity\BattleStatus;
+use App\Entity\UserCard;
 use App\Service\WsServerApp\Traits\WsUtilsTrait;
 
 class BattleMovementLogic extends AbstractBattleLogic
@@ -36,6 +37,12 @@ class BattleMovementLogic extends AbstractBattleLogic
         }
 
         if ($this->battleData['progress']['main']['phase'] !== BattleMainProgressPhaseConstant::BATTLE_PHASE) {
+            $this->battleException->throwError(BattleException::GENERIC_SECURITY_ERROR);
+        }
+
+        /** Checks if is the user's turn */
+        $lastTurn = \end($this->battleData['progress']['turns']);
+        if ($lastTurn['userId'] !== $user->getId()) {
             $this->battleException->throwError(BattleException::GENERIC_SECURITY_ERROR);
         }
 
@@ -76,7 +83,23 @@ class BattleMovementLogic extends AbstractBattleLogic
             $battleStatusEnt = $this->em->getRepository(BattleStatus::class)->find(BattleStatusConstant::FINISHED);
             $battleEnt->setBattleStatus($battleStatusEnt);
 
+            $this->releaseCardsSelection($battleEnt);
+
             $this->em->flush();
         }
+    }
+
+    /**
+     * Releases the cards that have been selected in this battle
+     *
+     * @param Battle $battleEnt
+     * @return void
+     */
+    protected function releaseCardsSelection(Battle $battleEnt)
+    {
+        $userCards = $this->em->getRepository(UserCard::class)->findBy(['idBattle' => $battleEnt]);
+        \array_walk($userCards, function ($userCard) {
+            $userCard->setIdBattle(null);
+        });
     }
 }

@@ -15,6 +15,7 @@ class BattleException
     const NOT_VALID_PARAMS = 1;
     const GENERIC_SECURITY_ERROR = 2;
     const GENERIC_NOT_FOUND_ELEMENT = 3;
+    const ACTION_IS_ALREADY_PERFORMED = 4;
 
     /**
      * Throws a DataException Error
