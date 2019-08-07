@@ -40,11 +40,20 @@ class CardsSelectionLogic extends AbstractBattleLogic
             $this->battleException->throwError(BattleException::GENERIC_SECURITY_ERROR);
         }
 
+        /** Checks if the action is not performed yet */
+        $cardSelectionNode = $this->battleData['progress']['main']['cardsSelection'] ?? [];
+        $findedUserSelection = \array_filter($cardSelectionNode, function ($cardSelection) use ($user) {
+            return $cardSelection['userId'] === $user->getId();
+        });
+        if (\count($findedUserSelection) > 0) {
+            $this->battleException->throwError(BattleException::ACTION_IS_ALREADY_PERFORMED);
+        }
+
         $cardsSelectedIds = \array_map(function ($element) {
             return $element['userCardId'];
         }, $cardsSelected);
 
-        $userCardsSelected = $this->em->getRepository(UserCard::class)->findBy(['id' => $cardsSelectedIds]);
+        $userCardsSelected = $this->em->getRepository(UserCard::class)->findBy(['id' => $cardsSelectedIds, 'idBattle' => null]);
         if (\count($userCardsSelected) !== self::NUM_CARDS_SELECTED) {
             $this->battleException->throwError(BattleException::GENERIC_SECURITY_ERROR);
         }
@@ -59,6 +68,13 @@ class CardsSelectionLogic extends AbstractBattleLogic
      */
     public function doIt()
     {
+        $battleEnt = $this->em->getRepository(Battle::class)->find((int) $this->battleData['id']);
+        \array_walk($this->data['userCardsSelected'], function ($userCard) use ($battleEnt) {
+            $userCard->setIdBattle($battleEnt);
+        });
+
+        $this->em->flush();
+
         $battleBuilder = new BattleBuilder($this->battleData);
         $this->battleData = $battleBuilder->addUserCardsSelection($this->data['userCardsSelected']);
     }

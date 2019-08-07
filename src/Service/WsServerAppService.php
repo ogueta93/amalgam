@@ -7,7 +7,7 @@ use Psr\Container\ContainerInterface;
 use Ratchet\ConnectionInterface;
 use Ratchet\MessageComponentInterface;
 
-class WsServerApp implements MessageComponentInterface
+class WsServerAppService implements MessageComponentInterface
 {
     /** Symfony Services */
     protected $container;

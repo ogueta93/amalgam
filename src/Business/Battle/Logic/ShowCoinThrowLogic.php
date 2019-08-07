@@ -10,7 +10,7 @@ use App\Business\Battle\Constant\BattleStatusConstant;
 use App\Entity\Battle;
 use App\Service\WsServerApp\Traits\WsUtilsTrait;
 
-class showCoinThrowLogic extends AbstractBattleLogic
+class ShowCoinThrowLogic extends AbstractBattleLogic
 {
     use WsUtilsTrait;
 
@@ -34,6 +34,15 @@ class showCoinThrowLogic extends AbstractBattleLogic
 
         if (\count($this->battleData['progress']['main']['cointThrow']) < 2) {
             $this->battleException->throwError(BattleException::GENERIC_SECURITY_ERROR);
+        }
+
+        /** Checks if the action is not performed yet */
+        $coinThrowNode = $this->battleData['progress']['main']['cointThrow'] ?? [];
+        $coinThrowPerformed = \array_filter($coinThrowNode, function ($coinThrow) use ($user) {
+            return $coinThrow['userId'] === $user->getId() && $coinThrow['checked'];
+        });
+        if (\count($coinThrowPerformed) > 0) {
+            $this->battleException->throwError(BattleException::ACTION_IS_ALREADY_PERFORMED);
         }
     }
 

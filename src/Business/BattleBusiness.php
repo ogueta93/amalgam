@@ -7,7 +7,7 @@ use App\Business\Battle\Constant\BattleMainProgressPhaseConstant;
 use App\Business\Battle\Logic\BattleMovementLogic;
 use App\Business\Battle\Logic\CardsSelectionLogic;
 use App\Business\Battle\Logic\NewBattleLogic;
-use App\Business\Battle\Logic\showCoinThrowLogic;
+use App\Business\Battle\Logic\ShowCoinThrowLogic;
 use App\Business\Battle\Notification\BattleNotification;
 use App\Business\Battle\Traits\BattleUtilsTrait;
 use App\Entity\Battle;
@@ -136,7 +136,7 @@ class BattleBusiness
         $this->battleId = (int) $data['battleId'] ?? null;
         $this->data = $this->quickBattleData();
 
-        $showCoinThrowLogic = $this->container->get(showCoinThrowLogic::class);
+        $showCoinThrowLogic = $this->container->get(ShowCoinThrowLogic::class);
         $showCoinThrowLogic->setParams($data, $this->data);
 
         $this->data = $showCoinThrowLogic->process();

@@ -16,7 +16,7 @@ class CardManager
     protected $security;
 
     /** Object Properties */
-    protected $validFilters = ['cardName', 'cardType'];
+    protected $validFilters = ['cardName', 'cardType', 'battleMode'];
 
     public function __construct(ContainerInterface $container, EntityManagerInterface $em, Security $security)
     {
@@ -52,6 +52,11 @@ class CardManager
             $qb
                 ->join('c.type', 'ct', 'WITH', 'ct.id = :cardType')
                 ->setParameter('cardType', $cleanFilters['cardType']);
+        }
+
+        if (isset($cleanFilters['battleMode'])) {
+            $qb
+                ->andWhere('uc.idBattle IS NULL');
         }
 
         $cards = $qb->getQuery()->getResult();
