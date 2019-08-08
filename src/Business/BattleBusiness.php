@@ -169,5 +169,8 @@ class BattleBusiness
         $this->save();
 
         $this->addWsResponseData($this->getFilteredData(), $this->getFilteredDataFromRivals());
+
+        $battleNotification = new BattleNotification($this->data, $this->getRivalsFromData(), BattleNotification::BATTLE_TURN_MOVEMENT);
+        $battleNotification->notify();
     }
 }
