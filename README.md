@@ -6,6 +6,10 @@ Amalgam is websocket server created for supplied all the processes to run a vide
 Amalgam supplies the backend side. You can get the front here: 
 - [Amalgam Front](https://github.com/ogueta93/amalgam-front)
 
+## Amalgam Dev-Tools
+Amalgam Dev Tools is a project that was maked with the idea to facilitied the necesary tools to develop in Amalgam and Amalgam Front.
+- [Amalgam Dev Tools](https://github.com/ogueta93/amalgam-dev-tools)
+
 ## Base technologies
 - [PHP 7.3](https://www.php.net/manual/en/intro-whatis.php)
 - [Symfony 4.3](https://symfony.com/)
