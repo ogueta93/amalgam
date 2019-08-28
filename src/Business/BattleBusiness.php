@@ -6,6 +6,7 @@ use App\Business\Battle\BattleException;
 use App\Business\Battle\Constant\BattleMainProgressPhaseConstant;
 use App\Business\Battle\Logic\BattleMovementLogic;
 use App\Business\Battle\Logic\CardsSelectionLogic;
+use App\Business\Battle\Logic\ClaimBattleRewardLogic;
 use App\Business\Battle\Logic\NewBattleLogic;
 use App\Business\Battle\Logic\ShowCoinThrowLogic;
 use App\Business\Battle\Notification\BattleNotification;
@@ -61,7 +62,9 @@ class BattleBusiness
         $this->data = $this->quickBattleData();
 
         $this->save();
-        $this->addWsResponseData($this->getFilteredData());
+
+        $battleEnd = $this->data['progress']['main']['phase'] > BattleMainProgressPhaseConstant::BATTLE_PHASE ? true : false;
+        $this->addWsResponseData(!$battleEnd ? $this->getFilteredData() : $this->data);
     }
 
     /**
@@ -171,6 +174,30 @@ class BattleBusiness
         $this->addWsResponseData($this->getFilteredData(), $this->getFilteredDataFromRivals());
 
         $battleNotification = new BattleNotification($this->data, $this->getRivalsFromData(), BattleNotification::BATTLE_TURN_MOVEMENT);
+        $battleNotification->notify();
+    }
+
+    /**
+     * Claims a reward
+     *
+     * @param array $data => @param int battleId, @param int|null userCardId, @param int|null eventKeyId
+     *
+     * @return void
+     */
+    public function claimReward($data)
+    {
+        $this->battleId = (int) $data['battleId'] ?? null;
+        $this->data = $this->quickBattleData();
+
+        $claimBattleRewardLogic = $this->container->get(ClaimBattleRewardLogic::class);
+        $claimBattleRewardLogic->setParams($data, $this->data);
+
+        $this->data = $claimBattleRewardLogic->process();
+        $this->save();
+
+        $this->addWsResponseData($this->getFilteredData(), $this->getFilteredDataFromRivals());
+
+        $battleNotification = new BattleNotification($this->data, $this->getRivalsFromData(), BattleNotification::BATTLE_REWARD_CLAIMED);
         $battleNotification->notify();
     }
 }

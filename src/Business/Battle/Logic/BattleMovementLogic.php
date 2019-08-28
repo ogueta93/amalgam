@@ -1,20 +1,25 @@
 <?php
-// src/Business/Battle/Logic/CardsSelectionLogic.php
+// src/Business/Battle/Logic/BattleMovementLogic.php
 namespace App\Business\Battle\Logic;
 
+use App\Base\Constant\CronEventConstant;
 use App\Business\Battle\AbstractBattleLogic;
 use App\Business\Battle\BattleException;
 use App\Business\Battle\Builder\BattleBuilder;
 use App\Business\Battle\Constant\BattleMainProgressPhaseConstant;
 use App\Business\Battle\Constant\BattleStatusConstant;
+use App\Business\Battle\Traits\BattleLogicUtilsTrait;
 use App\Entity\Battle;
 use App\Entity\BattleStatus;
-use App\Entity\UserCard;
+use App\Entity\CronEvent;
+use App\Entity\CronEventType;
+use App\Entity\User;
 use App\Service\WsServerApp\Traits\WsUtilsTrait;
 
 class BattleMovementLogic extends AbstractBattleLogic
 {
     use WsUtilsTrait;
+    use BattleLogicUtilsTrait;
 
     /**
      * Proves if the inputData is correct to process
@@ -78,28 +83,65 @@ class BattleMovementLogic extends AbstractBattleLogic
         $this->battleData = $battleBuilder->makeCardMovement($this->inputData);
 
         $battleFinished = $this->battleData['progress']['main']['battleResult'] ?? null;
-        if (!\is_null($battleFinished)) {
-            $battleEnt = $this->em->getRepository(Battle::class)->find($this->battleData['id']);
+        $finishPhase = $this->battleData['progress']['main']['phase'] === BattleMainProgressPhaseConstant::FINISH_PHASE ? true : false;
+
+        $this->data['battleEnt'] = $this->em->getRepository(Battle::class)->find($this->battleData['id']);
+
+        if (!\is_null($battleFinished) && $finishPhase) {
+            /** Battle finished on draw */
             $battleStatusEnt = $this->em->getRepository(BattleStatus::class)->find(BattleStatusConstant::FINISHED);
-            $battleEnt->setBattleStatus($battleStatusEnt);
+            $this->data['battleEnt']->setBattleStatus($battleStatusEnt);
 
-            $this->releaseCardsSelection($battleEnt);
+            $this->releaseCardsSelection();
 
-            $this->em->flush();
+        } else if (!\is_null($battleFinished)) {
+            /** Battle finished with a winner, Reward process must to start */
+            $winnerId = $this->battleData['progress']['main']['battleResult']['winner']['user']['id'];
+            $winnerEmail = $this->battleData['progress']['main']['battleResult']['winner']['user']['email'];
+            $loserId = $this->battleData['progress']['main']['battleResult']['loser']['user']['id'];
+
+            $this->releaseCardsSelection($winnerId);
+            $this->releaseCardsSelection($loserId, false);
+            $this->makeRewardEvent($loserId, $winnerEmail);
         }
+
+        $this->em->flush();
     }
 
     /**
-     * Releases the cards that have been selected in this battle
+     * Makes the reward event with a time limit
      *
-     * @param Battle $battleEnt
+     * @param int $userId
+     * @param string $winnerEmail
      * @return void
      */
-    protected function releaseCardsSelection(Battle $battleEnt)
+    protected function makeRewardEvent(int $userId, string $winnerEmail)
     {
-        $userCards = $this->em->getRepository(UserCard::class)->findBy(['idBattle' => $battleEnt]);
-        \array_walk($userCards, function ($userCard) {
-            $userCard->setIdBattle(null);
-        });
+        $today = new \DateTime();
+        $expiredTime = $this->battleData['progress']['main']['battleResult']['winner']['rewardExpiredTime'];
+        $expiredDateTime = \DateTime::createFromFormat('Y-m-d H:i:s', $expiredTime);
+        $expiredDateTime->modify(\sprintf('+%s minutes', CronEventConstant::BATTLE_REWARD_EVENT_TIME_MINUTES));
+
+        $keyId = \md5(\sprintf('%s%s%s', CronEventConstant::BATTLE_REWARD_EVENT, $this->battleData['id'], \uniqid()));
+        $data = [
+            'battleId' => $this->battleData['id'],
+            'userCardsIds' => $this->getUserCardsIdsByUserId($userId, true),
+            'rewardType' => $this->battleData['progress']['main']['battleResult']['winner']['rewardType'],
+            'loggedEmail' => $winnerEmail
+        ];
+
+        $cronEventTypeEnt = $this->em->getRepository(CronEventType::class)->find(CronEventConstant::BATTLE_REWARD_EVENT);
+
+        $cronEvent = new CronEvent();
+        $cronEvent->setData(\json_encode($data));
+        $cronEvent->setExpiredDateTime($expiredDateTime);
+        $cronEvent->setKeyId($keyId);
+        $cronEvent->setCronEventType($cronEventTypeEnt);
+        $cronEvent->setCreatedAt($today);
+        $cronEvent->setUpdatedAt($today);
+        $cronEvent->setDeletedAt(null);
+
+        $this->em->persist($cronEvent);
+        $this->em->flush();
     }
 }

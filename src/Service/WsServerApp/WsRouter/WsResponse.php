@@ -7,8 +7,6 @@ use App\Service\WsServerApp\Exception\WsException;
 
 class WsResponse
 {
-    const LOCAL_PREFFIX = '-local';
-
     const DATA_PRIMARY_USER_FIELD = 'primaryUser';
     const DATA_USERS_FIELD = 'usersToSent';
 
@@ -19,6 +17,7 @@ class WsResponse
     protected $users = [];
     protected $action;
     protected $token;
+    protected $cronEvent;
     protected $error;
 
     public function __construct()
@@ -49,6 +48,16 @@ class WsResponse
     public function getUsersToSend()
     {
         return $this->users;
+    }
+
+    /**
+     * Gets the cronEvent string
+     *
+     * @return string|null
+     */
+    public function getCronEvent()
+    {
+        return $this->cronEvent['cre'] ?? null;
     }
 
     /**
@@ -100,6 +109,19 @@ class WsResponse
     }
 
     /**
+     * Sets cronEvent
+     *
+     * @param string $cronEvent
+     * @return void
+     */
+    public function setCronEvent(string $cronEvent)
+    {
+        $this->cronEvent = [
+            'cre' => $cronEvent
+        ];
+    }
+
+    /**
      * Sets users for send the response
      *
      * @param array $user
@@ -146,6 +168,9 @@ class WsResponse
 
             if ($this->token) {
                 $data = \array_merge($data, $this->token);
+            }
+            if ($this->cronEvent) {
+                $data = \array_merge($data, $this->cronEvent);
             }
         } else {
             $data['c'][] = \array_merge(['ra' => $this->action], $this->error);

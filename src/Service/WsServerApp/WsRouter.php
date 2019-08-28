@@ -19,6 +19,7 @@ class WsRouter extends AbstractService
 
     protected static $wsResponse;
     protected static $user;
+    protected static $cronEvent;
 
     const SERVICE = 'service';
     const METHOD = 'method';
@@ -51,12 +52,21 @@ class WsRouter extends AbstractService
     /**
      * Gets logged user
      *
-     * @param User
      * @return mixed
      */
     public static function getUser()
     {
         return self::$user;
+    }
+
+    /**
+     * Gets cronEvent
+     *
+     * @return mixed
+     */
+    public static function getCronEvent()
+    {
+        return self::$wsResponse->getCronEvent();
     }
 
     /**
@@ -161,6 +171,10 @@ class WsRouter extends AbstractService
         $this->hasTokenSecurity = $actionData[self::TOKEN_SECURITY] ?? true;
 
         self::$wsResponse->setAction($this->wsRequest->getAction());
+
+        if ($this->wsRequest->getCronEvent()) {
+            self::$wsResponse->setCronEvent($this->wsRequest->getCronEvent());
+        }
     }
 
     /**

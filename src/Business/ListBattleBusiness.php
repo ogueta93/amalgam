@@ -3,7 +3,7 @@
 namespace App\Business;
 
 use App\Business\Battle\BattleException;
-use App\Business\Battle\Constant\BattleStatusConstant;
+use App\Business\Battle\Constant\BattleMainProgressPhaseConstant;
 use App\Business\Battle\Logic\AcceptNewBattleLogic;
 use App\Business\Battle\Notification\BattleNotification;
 use App\Business\Battle\Traits\BattleUtilsTrait;
@@ -49,7 +49,7 @@ class ListBattleBusiness
         $user = $this->getLoggedUser();
 
         $listBattleManager = $this->container->get(ListBattleManager::class);
-        $data = $listBattleManager->getActiveListByFilters($user->getId(), $content);
+        $data = $listBattleManager->getActiveUserListByFilters($user->getId(), $content);
 
         foreach ($data as $key => &$battle) {
             $this->data = $battle['data'];
@@ -67,15 +67,19 @@ class ListBattleBusiness
      */
     public function refuseBattle($content)
     {
+        $this->battleId = (int) $content['battleId'] ?? null;
+        $this->data = $this->quickBattleData();
+
         $user = $this->getLoggedUser();
         $rivalId = null;
 
-        $battleEnt = $this->em->getRepository(Battle::class)->find($content['battleId']);
+        $battleEnt = $this->em->getRepository(Battle::class)->find($this->battleId);
         if (!$battleEnt) {
             $this->battleException->throwError(BattleException::GENERIC_NOT_FOUND_ELEMENT);
         }
 
-        if ($battleEnt->getBattleStatus()->getId() !== BattleStatusConstant::PENDING) {
+        $phaseData = $this->data['progress']['main']['phase'] ?? null;
+        if ($phaseData && $phaseData !== BattleMainProgressPhaseConstant::CARD_SELECTION_PHASE) {
             $this->battleException->throwError(BattleException::GENERIC_SECURITY_ERROR);
         }
 

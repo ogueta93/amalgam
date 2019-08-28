@@ -21,8 +21,9 @@ class WsRequest
     protected $content;
     protected $token;
     protected $environment;
+    protected $cronEvent;
 
-    const AVAILABLE_FIELDS = ['a', 'c', 't', 'ev'];
+    const AVAILABLE_FIELDS = ['a', 'c', 't', 'ev', 'cre'];
     const ENVIRONMENT_AVAILABLE_FIELDS = ['l'];
 
     public function __construct(ContainerInterface $container, EntityManagerInterface $em = null, Security $security = null)
@@ -46,6 +47,7 @@ class WsRequest
         $this->content = $this->data['c'] ?? [];
         $this->token = $this->data['t'] ?? null;
         $this->environment = $this->data['ev'] ?? null;
+        $this->cronEvent = $this->data['cre'] ?? null;
 
         $this->checkValidParams();
     }
@@ -98,6 +100,16 @@ class WsRequest
     public function getEnvironment()
     {
         return $this->environment;
+    }
+
+    /**
+     * Gets cronEvent
+     *
+     * @return string $cronEvent
+     */
+    public function getCronEvent()
+    {
+        return $this->cronEvent;
     }
 
     /**

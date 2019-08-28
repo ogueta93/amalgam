@@ -38,6 +38,10 @@ battleMovement:
     service: App\Business\BattleBusiness
     method: battleMovement
 
+claimBattleReward: 
+    service: App\Business\BattleBusiness
+    method: claimReward
+
 # BattleList routes
 getUserBattleList:
     service: App\Business\ListBattleBusiness

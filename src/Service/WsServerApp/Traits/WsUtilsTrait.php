@@ -55,6 +55,16 @@ trait WsUtilsTrait
     }
 
     /**
+     * Gets cronEvent
+     *
+     * @return mixed
+     */
+    protected function getCronEvent()
+    {
+        return WsRouter::getCronEvent();
+    }
+
+    /**
      * Adds client data on memcache
      *
      * @param User $user
