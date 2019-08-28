@@ -10,12 +10,13 @@ class BattleException
 {
     /** Constants */
     const BATTLE_KEY_WORK = 'battleError_%s';
-    const BATTLE_PHASE = 'battle';
 
     const NOT_VALID_PARAMS = 1;
     const GENERIC_SECURITY_ERROR = 2;
     const GENERIC_NOT_FOUND_ELEMENT = 3;
     const ACTION_IS_ALREADY_PERFORMED = 4;
+
+    const REWARD_HAS_EXPIRED = 11;
 
     /**
      * Throws a DataException Error
@@ -45,11 +46,13 @@ class BattleException
 
         switch ($battleErrorCode) {
             case self::NOT_VALID_PARAMS:
-                return [Response::HTTP_NOT_ACCEPTABLE, $errorMessage, self::BATTLE_PHASE];
+                return [Response::HTTP_NOT_ACCEPTABLE, $errorMessage, WsException::WS_AMALGAN_PHASE_BATTLE_ERROR];
             case self::GENERIC_SECURITY_ERROR:
-                return [Response::HTTP_FORBIDDEN, $errorMessage, self::BATTLE_PHASE];
+                return [Response::HTTP_FORBIDDEN, $errorMessage, WsException::WS_AMALGAN_PHASE_BATTLE_ERROR];
+            case self::REWARD_HAS_EXPIRED:
+                return [Response::HTTP_FORBIDDEN, $errorMessage, WsException::WS_AMALGAN_PHASE_REWARD_ERROR];
             default:
-                return [Response::HTTP_BAD_REQUEST, $errorMessage, self::BATTLE_PHASE];
+                return [Response::HTTP_BAD_REQUEST, $errorMessage, WsException::WS_AMALGAN_PHASE_BATTLE_ERROR];
         }
     }
 }

@@ -16,4 +16,7 @@ class WsException extends DataException
     const MSG_NOT_VALID_RIGHTS = 'notValidRights';
 
     const WS_AMALGAN_PHASE_FATAL_ERROR = 1;
+    const WS_AMALGAN_PHASE_COMMOM_ERROR = 2;
+    const WS_AMALGAN_PHASE_BATTLE_ERROR = 3;
+    const WS_AMALGAN_PHASE_REWARD_ERROR = 4;
 }

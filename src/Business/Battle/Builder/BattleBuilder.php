@@ -6,6 +6,8 @@ use App\Business\Battle\Constant\BattleMainProgressPhaseConstant;
 use App\Business\Battle\Constant\BattleUserStatusConstant;
 use App\Entity\BattleStatus;
 use App\Service\WsServerApp\Traits\WsUtilsTrait;
+use App\Business\Battle\Constant\BattleRewardTypeConstant;
+use App\Business\Battle\Constant\BattleSqlEvent;
 
 class BattleBuilder
 {
@@ -42,6 +44,9 @@ class BattleBuilder
     const NODE_BATTLE_RESULT_WINNER = 'winner';
     const NODE_BATTLE_RESULT_LOSER = 'loser';
     const NODE_BATTLE_RESULT_DRAW = 'draw';
+    const NODE_BATTLE_RESULT_REWARD_TYPE = 'rewardType';
+    const NODE_BATTLE_RESULT_REWARD_CARDS = 'rewardedCards';
+    const NODE_BATTLE_RESULT_REWARD_EXPIRED_TIME = 'rewardExpiredTime';
 
     const NODE_CARD_USER_CARD_ID = 'userCardId';
     const NODE_CARD_CAPTURED = 'captured';
@@ -225,6 +230,23 @@ class BattleBuilder
     }
 
     /**
+     * Completes the reward proccess
+     *
+     * @param array $data
+     * @return array
+     */
+    public function takeReward(array $data): array
+    {
+        $userCardId = $data['userCardId'] ?? null;
+
+        $this->processReward($userCardId);
+
+        $this->battleData[self::NODE_LAST_CHANGE] = $this->setLastChange();
+
+        return $this->battleData;
+    }
+
+    /**
      * Process the car that It is playing now
      * 
      * @param array $cardInPlay
@@ -284,19 +306,25 @@ class BattleBuilder
         $battleResult = [];
         if ($draw) {
             $battleResult[self::NODE_BATTLE_RESULT_DRAW] = true;
+
+            $this->battleData[self::NODE_PROGRESS][self::NODE_PROGRESS_MAIN][self::NODE_MAIN_PHASE] = BattleMainProgressPhaseConstant::FINISH_PHASE;
         } else {
             $battleResult[self::NODE_BATTLE_RESULT_WINNER] = [
                 self::NODE_USER => $winner,
-                self::NODE_CARDS_COUNT => \count($this->getCardsCapturedByUserId($winner['id']))
+                self::NODE_CARDS_COUNT => \count($this->getCardsCapturedByUserId($winner['id'])),
+                self::NODE_BATTLE_RESULT_REWARD_TYPE => \count($this->getCardsCapturedByUserId($winner['id'])) >= self::MAX_BATTLE_BOARD_FIELDS ? 
+                    BattleRewardTypeConstant::PERFECT_REWARD : BattleRewardTypeConstant::SIMPLE_REWARD,
+                self::NODE_BATTLE_RESULT_REWARD_EXPIRED_TIME => $this->getRewardExpiredTime()
             ];
             $battleResult[self::NODE_BATTLE_RESULT_LOSER] = [
                 self::NODE_USER => $loser,
                 self::NODE_CARDS_COUNT => \count($this->getCardsCapturedByUserId($loser['id']))
             ];
+
+            $this->battleData[self::NODE_PROGRESS][self::NODE_PROGRESS_MAIN][self::NODE_MAIN_PHASE] = BattleMainProgressPhaseConstant::REWARD_PHASE;
         }
 
         $this->battleData[self::NODE_PROGRESS][self::NODE_PROGRESS_MAIN][self::NODE_MAIN_BATTLE_RESULT] = $battleResult;
-        $this->battleData[self::NODE_PROGRESS][self::NODE_PROGRESS_MAIN][self::NODE_MAIN_PHASE] = BattleMainProgressPhaseConstant::FINISH_PHASE;
     }
 
     /**
@@ -329,6 +357,36 @@ class BattleBuilder
         }
 
         return $combo;
+    }
+
+    /**
+     * Processes the reward and closes the battle
+     * 
+     * @param int|null $userCardId
+     * @return void
+     */
+    protected function processReward(?int $userCardId = null) 
+    {
+        $rival = ($this->getRivalsFromBattleData())[0];
+       
+        $claimedCards = [];
+        foreach ($this->battleData[self::NODE_PROGRESS][self::NODE_PROGRESS_MAIN][self::NODE_MAIN_CARDS_SELECTION] as $key => $userCardSelection) {
+            if($userCardSelection[self::NODE_USER_ID] === $rival['id']) {
+                if ($userCardId !== null) {
+                    $claimedCards = \array_values(\array_filter($userCardSelection[self::NODE_CARDS], function($card) use($userCardId) {
+                        return $card['userCardId'] === $userCardId;
+                    }));
+                } else {
+                    $claimedCards = $userCardSelection[self::NODE_CARDS];
+                }
+                break;
+            }
+        }
+
+        $this->battleData[self::NODE_PROGRESS][self::NODE_PROGRESS_MAIN][self::NODE_MAIN_BATTLE_RESULT]
+            [self::NODE_BATTLE_RESULT_WINNER][self::NODE_BATTLE_RESULT_REWARD_CARDS] = $claimedCards;
+
+        $this->battleData[self::NODE_PROGRESS][self::NODE_PROGRESS_MAIN][self::NODE_MAIN_PHASE] = BattleMainProgressPhaseConstant::FINISH_PHASE;
     }
 
     /**
@@ -670,12 +728,28 @@ class BattleBuilder
     /**
      * Set lastChange date
      *
+     * @return sting
      */
     protected function setLastChange()
     {
         $today = new \DateTime();
 
         return $today->format(self::FORMAT_DATE);
+    }
+
+    /**
+     * Gets the reward expired time
+     *
+     * @return sting
+     */
+    protected function getRewardExpiredTime() 
+    {
+        $minutesToAdd = BattleSqlEvent::REWARD_EVENT_TIME_MINUTES;
+        
+        $expiredTime = new \DateTime();
+        $expiredTime->modify("+{$minutesToAdd} minutes");
+
+        return $expiredTime->format(self::FORMAT_DATE);
     }
 
     /**

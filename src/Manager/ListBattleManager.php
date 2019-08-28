@@ -18,6 +18,7 @@ class ListBattleManager
 
     /** Object Properties */
     protected $validFilters = ['type'];
+    protected $userId = null;
 
     public function __construct(ContainerInterface $container, EntityManagerInterface $em, Security $security)
     {
@@ -34,9 +35,11 @@ class ListBattleManager
      *
      * @return array $data
      */
-    public function getActiveListByFilters($userId, $filters): array
+    public function getActiveUserListByFilters($userId, $filters): array
     {
+        $this->userId = $userId;
         $cleanFilters = $this->cleanFilters($filters);
+        $data = [];
 
         $qb = $this->em->createQueryBuilder();
         $qb
@@ -51,10 +54,11 @@ class ListBattleManager
             ]);
 
         $battles = $qb->getQuery()->getResult();
-
-        $data = \array_map(function ($battle) {
-            return $battle->getBattle()->toArray();
-        }, $battles);
+        foreach ($battles as $key => $battle) {
+            if ($this->filterBattlesByData($battle)) {
+                $data[] = $battle->getBattle()->toArray();
+            }
+        }
 
         return $data;
     }
@@ -74,5 +78,24 @@ class ListBattleManager
         }, ARRAY_FILTER_USE_BOTH);
 
         return $cleanFilters;
+    }
+
+    /**
+     * Filters battles by its own data
+     *
+     * @param array $battle
+     * @return bool
+     */
+    protected function filterBattlesByData($battle): bool
+    {
+        $battleData = \json_decode($battle->getBattle()->getData(), true);
+
+        $battleResult = $battleData['progress']['main']['battleResult'] ?? null;
+        if ($battleResult) {
+            $winner = $battleResult['winner'] ?? null;
+            return $winner && $winner['user']['id'] === $this->userId;
+        }
+
+        return true;
     }
 }

@@ -14,6 +14,7 @@ class BattleNotification extends AbstractNotification
     const NEW_BATTLE = 'newBattle';
     const ACCEPT_BATTLE = 'acceptBattle';
     const BATTLE_TURN_MOVEMENT = 'battleTurnMovement';
+    const BATTLE_REWARD_CLAIMED = 'battleRewardClaimed';
 
     /**
      * Notifies the event to the Ws Service about the event's value
@@ -31,6 +32,9 @@ class BattleNotification extends AbstractNotification
                 break;
             case self::BATTLE_TURN_MOVEMENT:
                 $data = $this->getBattleTurnMovementData();
+                break;
+            case self::BATTLE_REWARD_CLAIMED:
+                $data = $this->getBattleRewardClaimedData();
                 break;
 
             default:
@@ -86,13 +90,30 @@ class BattleNotification extends AbstractNotification
      */
     protected function getBattleTurnMovementData(): array
     {
-
         return [
             'battleId' => $this->data['id'],
             'createdBy' => $this->data['createdBy'],
             'battleType' => $this->data['type'],
+            'battleResult' => $this->data['progress']['main']['battleResult'] ?? null,
             'user' => $this->getLoggedUser()->toArray(),
             'type' => self::BATTLE_TURN_MOVEMENT
+        ];
+    }
+
+    /**
+     * Gets data for indicate the claimed reward
+     *
+     * @return array $data
+     */
+    protected function getBattleRewardClaimedData(): array
+    {
+        return [
+            'battleId' => $this->data['id'],
+            'battleType' => $this->data['type'],
+            'rewardType' => $this->data['progress']['main']['battleResult']['winner']['rewardType'],
+            'cards' => $this->data['progress']['main']['battleResult']['winner']['rewardedCards'],
+            'user' => $this->getLoggedUser()->toArray(),
+            'type' => self::BATTLE_REWARD_CLAIMED
         ];
     }
 }

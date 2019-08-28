@@ -9,6 +9,7 @@
         "doctrine/annotations": "^1.6",
         "namshi/jose": "7.0.*",
         "nelmio/cors-bundle": "^1.5",
+        "ratchet/pawl": "^0.3.4",
         "sensio/framework-extra-bundle": "^5.1",
         "symfony/apache-pack": "^1.0",
         "symfony/asset": "4.3.*",
