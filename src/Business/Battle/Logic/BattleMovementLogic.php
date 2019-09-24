@@ -2,13 +2,15 @@
 // src/Business/Battle/Logic/BattleMovementLogic.php
 namespace App\Business\Battle\Logic;
 
-use App\Base\Constant\CronEventConstant;
 use App\Business\Battle\AbstractBattleLogic;
 use App\Business\Battle\BattleException;
 use App\Business\Battle\Builder\BattleBuilder;
 use App\Business\Battle\Constant\BattleMainProgressPhaseConstant;
 use App\Business\Battle\Constant\BattleStatusConstant;
 use App\Business\Battle\Traits\BattleLogicUtilsTrait;
+use App\Business\DailyReward\DailyRewardBusiness;
+use App\Constant\CronEventConstant;
+use App\Constant\DailyRewardTypeConstant;
 use App\Entity\Battle;
 use App\Entity\BattleStatus;
 use App\Entity\CronEvent;
@@ -103,6 +105,7 @@ class BattleMovementLogic extends AbstractBattleLogic
             $this->releaseCardsSelection($winnerId);
             $this->releaseCardsSelection($loserId, false);
             $this->makeRewardEvent($loserId, $winnerEmail);
+            $this->applyDailyWinRowCount($winnerId);
         }
 
         $this->em->flush();
@@ -115,7 +118,7 @@ class BattleMovementLogic extends AbstractBattleLogic
      * @param string $winnerEmail
      * @return void
      */
-    protected function makeRewardEvent(int $userId, string $winnerEmail)
+    protected function makeRewardEvent(int $userId, string $winnerEmail): void
     {
         $today = new \DateTime();
         $expiredTime = $this->battleData['progress']['main']['battleResult']['winner']['rewardExpiredTime'];
@@ -143,5 +146,22 @@ class BattleMovementLogic extends AbstractBattleLogic
 
         $this->em->persist($cronEvent);
         $this->em->flush();
+    }
+
+    /**
+     * Applies the daiy win row count
+     *
+     * @param int $winnerId
+     * @return void
+     */
+    protected function applyDailyWinRowCount(int $winnerId): void
+    {
+        $dailyRewardBusiness = $this->container->get(DailyRewardBusiness::class);
+        $userEnt = $this->em->getRepository(User::class)->find($winnerId);
+
+        $dailyReward = $dailyRewardBusiness->getDailyRewardByType(DailyRewardTypeConstant::WIN_ROW_BOOSTER, $userEnt);
+        if ($dailyReward->canBeClaimed()) {
+            $dailyReward->addWinRowCount();
+        }
     }
 }

@@ -2,9 +2,9 @@
 // src/Business/Battle/Constant/BattleTypeConstant.php
 namespace App\Business\Battle\Constant;
 
-use App\Business\Battle\AbstractBattleConstant;
+use App\Base\Constant\AbstractConstant;
 
-class BattleTypeConstant extends AbstractBattleConstant
+class BattleTypeConstant extends AbstractConstant
 {
     protected $database = true;
 

@@ -1,12 +1,11 @@
 <?php
-// src/Business/Battle/AbstractBattleConstant.php
-namespace App\Business\Battle;
+// src/Base/Constant/AbstractConstant.php
+namespace App\Base\Constant;
 
 use App\Base\Exception\DataException;
-use App\Business\Battle;
 use Symfony\Component\HttpFoundation\Response;
 
-abstract class AbstractBattleConstant
+abstract class AbstractConstant
 {
     /** Properties */
     protected $database = false;
