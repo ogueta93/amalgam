@@ -3,8 +3,8 @@
 namespace App\Command;
 
 use App\Base\Command\AbstractCommand;
-use App\Base\Constant\CronEventConstant;
 use App\Command\Traits\WsClientCommandTrait;
+use App\Constant\CronEventConstant;
 use App\Entity\CronEvent;
 use App\Entity\CronEventType;
 use App\Service\JWToken;

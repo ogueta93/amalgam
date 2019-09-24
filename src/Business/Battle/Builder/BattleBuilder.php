@@ -7,7 +7,7 @@ use App\Business\Battle\Constant\BattleUserStatusConstant;
 use App\Entity\BattleStatus;
 use App\Service\WsServerApp\Traits\WsUtilsTrait;
 use App\Business\Battle\Constant\BattleRewardTypeConstant;
-use App\Business\Battle\Constant\BattleSqlEvent;
+use App\Constant\CronEventConstant;
 
 class BattleBuilder
 {
@@ -744,7 +744,7 @@ class BattleBuilder
      */
     protected function getRewardExpiredTime() 
     {
-        $minutesToAdd = BattleSqlEvent::REWARD_EVENT_TIME_MINUTES;
+        $minutesToAdd = CronEventConstant::BATTLE_REWARD_EVENT_TIME_MINUTES;
         
         $expiredTime = new \DateTime();
         $expiredTime->modify("+{$minutesToAdd} minutes");
