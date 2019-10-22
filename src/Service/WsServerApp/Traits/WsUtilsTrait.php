@@ -69,11 +69,12 @@ trait WsUtilsTrait
      *
      * @param User $user
      * @param array $data
+     * @param bool $anonymous
      * @return void
      */
-    protected function setClientUserData(User $user, $data = null)
+    protected function setClientUserData(User $user, $data = null, $anonymous = false)
     {
-        WsManager::setClient($user, $data);
+        WsManager::setClient($user, $data, $anonymous);
     }
 
     /**

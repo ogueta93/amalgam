@@ -7,6 +7,7 @@ use App\Entity\User;
 use App\Service\Cache;
 use App\Service\Cache\CacheType;
 use App\Service\WsServerApp\Exception\WsException;
+use App\Service\WsServerApp\Router;
 use App\Service\WsServerApp\Traits\WsUtilsTrait;
 use App\Service\WsServerApp\WsRouter\WsResponse;
 use Ratchet\ConnectionInterface;
@@ -31,17 +32,20 @@ class WsManager extends AbstractService
      *
      * @param User $user
      * @param array $data
+     * @param bool $anonymous
      * @return void
      */
-    public static function setClient(User $user, $data = null)
+    public static function setClient(User $user, $data = null, $anonymous = false)
     {
-        self::$clients[$user->getId()] = self::$conn;
-
         foreach (self::$outsiders as $key => $outsider) {
             if ($outsider == self::$conn) {
                 unset(self::$outsiders[$key]);
                 break;
             }
+        }
+
+        if (!$anonymous) {
+            self::$clients[$user->getId()] = self::$conn;
         }
 
         $clientData = [
@@ -184,7 +188,7 @@ class WsManager extends AbstractService
      */
     protected function sendMessage(WsResponse $response)
     {
-        if($userMsg = $response->getMsg()) {
+        if ($userMsg = $response->getMsg()) {
             self::$conn->send($userMsg);
         }
 

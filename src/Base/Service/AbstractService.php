@@ -57,6 +57,16 @@ abstract class AbstractService
     }
 
     /**
+     * Resets fundamental properties
+     *
+     * @return void
+     */
+    protected function reset()
+    {
+        $this->container->get('doctrine')->resetManager();
+    }
+
+    /**
      * Sets config name
      */
     abstract protected function setConfigName();
