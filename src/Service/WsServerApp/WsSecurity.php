@@ -21,22 +21,20 @@ class WsSecurity extends AbstractService
      * @param array $data
      * @return void
      */
-    public function login(array $data)
+    public function login(array $data): void
     {
         $user = $this->em->getRepository(User::class)->findOneBy(['email' => $data['email']]);
-        if ($user) {
-            $encoder = $this->container->get('security.password_encoder');
+        $encoder = $this->container->get('security.password_encoder');
 
-            if ($encoder->isPasswordValid($user, $data['password'])) {
-                $this->loggerUser($user);
-                $this->addWsResponseData(['user' => $user->toArray()]);
-                return $this->setResponseToken($user, $this->jwToken->create($data['email']));
-            }
+        if (!$user || !$encoder->isPasswordValid($user, $data['password'])) {
+            throw new WsException(Response::HTTP_FORBIDDEN, [
+                'message' => WsException::MSG_INVALID_CREDENTIALS
+            ]);
         }
 
-        throw new WsException(Response::HTTP_FORBIDDEN, [
-            'message' => WsException::MSG_INVALID_CREDENTIALS
-        ]);
+        $this->loggerUser($user);
+        $this->addWsResponseData(['user' => $user->toArray()]);
+        $this->setResponseToken($user, $this->jwToken->create($data['email']));
     }
 
     /**
@@ -44,9 +42,19 @@ class WsSecurity extends AbstractService
      *
      * @return void
      */
-    public function checkSecureConnection()
+    public function checkSecureConnection(): void
     {
         $this->addWsResponseData($this->getLoggedUser()->toArray());
+    }
+
+    /**
+     * Responses the heart beat
+     *
+     * @return void
+     */
+    public function hearBeat(): void
+    {
+        $this->addWsResponseData(true);
     }
 
     /**
@@ -55,7 +63,7 @@ class WsSecurity extends AbstractService
      * @param string $token
      * @return void
      */
-    public function checkToken($token)
+    public function checkToken($token): void
     {
         $notValidToken = false;
         $payLoad = false;
@@ -70,7 +78,7 @@ class WsSecurity extends AbstractService
             $user = $this->em->getRepository(User::class)->findOneBy(['email' => $payLoad['uid']]);
             if ($user) {
                 $this->loggerUser($user);
-                return $this->setResponseToken($user, $this->jwToken->create($payLoad['uid']));
+                $this->setResponseToken($user, $this->jwToken->create($payLoad['uid']));
             }
         } else {
             throw new WsException(Response::HTTP_FORBIDDEN, [
@@ -86,10 +94,24 @@ class WsSecurity extends AbstractService
      * @param $user
      * @return void
      */
-    protected function loggerUser(User $user)
+    protected function loggerUser(User $user): void
     {
         $this->setLoggedUser($user);
-        $this->setClientUserData($user);
+        $this->setClientUserData($user, null, $this->checkAnonymousUser());
+    }
+
+    /**
+     * Check if the user must be nonymous
+     *
+     * @return bool
+     */
+    protected function checkAnonymousUser(): bool
+    {
+        if ($this->getCronEvent()) {
+            return true;
+        }
+
+        return false;
     }
 
     /**

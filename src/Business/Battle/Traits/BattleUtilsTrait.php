@@ -82,24 +82,33 @@ trait BattleUtilsTrait
      */
     protected function quickBattleData(): array
     {
-        $battleEnt = $this->em->getRepository(Battle::class)->find((int) $this->battleId);
-        if (!$battleEnt) {
-            $this->battleException->throwError(BattleException::GENERIC_NOT_FOUND_ELEMENT);
+        $data = \json_decode($this->cache->get(sprintf(CacheType::BATTLE, (int) $this->battleId)), true);
+
+        if ($data) {
+            $userRelation = \array_filter($data['users'], function ($element) {
+                return $this->getLoggedUser()->getId() === $element['user']['id'];
+            });
+
+            if (!$userRelation) {
+                $this->battleException->throwError(BattleException::GENERIC_SECURITY_ERROR);
+            }
+        } else {
+            $battleEnt = $this->em->getRepository(Battle::class)->find((int) $this->battleId);
+            if (!$battleEnt) {
+                $this->battleException->throwError(BattleException::GENERIC_NOT_FOUND_ELEMENT);
+            }
+
+            $userBattle = $this->em->getRepository(UserBattle::class)->findBy(['user' => $this->getLoggedUser(), 'battle' => $battleEnt]);
+            if (!$userBattle) {
+                $this->battleException->throwError(BattleException::GENERIC_SECURITY_ERROR);
+            }
+
+            $this->battleEnt = $battleEnt;
+
+            $data = \json_decode($battleEnt->getData(), true);
         }
 
-        $userBattle = $this->em->getRepository(UserBattle::class)->findBy(['user' => $this->getLoggedUser(), 'battle' => $battleEnt]);
-        if (!$userBattle) {
-            $this->battleException->throwError(BattleException::GENERIC_SECURITY_ERROR);
-        }
-
-        $this->battleEnt = $battleEnt;
-
-        $data = $this->cache->get(sprintf(CacheType::BATTLE, (int) $this->battleId));
-        if (!$data) {
-            $data = $battleEnt->getData();
-        }
-
-        return \json_decode($data, true);
+        return $data;
     }
 
     /**
@@ -115,19 +124,21 @@ trait BattleUtilsTrait
         if ($this->battleId) {
             $this->battleEnt = $this->battleEnt ?? $this->em->getRepository(Battle::class)->find($this->battleId);
 
-            if ($this->battleEnt) {
-                $this->battleEnt->setData($data);
-
-                if ($cache) {
-                    $this->cache->set(
-                        sprintf(CacheType::BATTLE, $this->battleId),
-                        $data,
-                        (new \DateTime('tomorrow'))->getTimestamp()
-                    );
-                }
-
-                $this->em->flush();
+            if (!$this->battleEnt) {
+                $this->battleException->throwError(BattleException::GENERIC_NOT_FOUND_ELEMENT);
             }
+
+            $this->battleEnt->setData($data);
+
+            if ($cache) {
+                $this->cache->set(
+                    sprintf(CacheType::BATTLE, $this->battleId),
+                    $data,
+                    86400
+                );
+            }
+
+            $this->em->flush();
         }
     }
 }

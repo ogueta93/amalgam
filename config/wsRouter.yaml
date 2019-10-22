@@ -9,7 +9,11 @@ login:
 checkSecureConnection:
     service: App\Service\WsServerApp\WsSecurity
     method: checkSecureConnection
-    tokenSecurity: true
+
+heartBeat:
+    service: App\Service\WsServerApp\WsSecurity
+    method: hearBeat
+    tokenSecurity: false
 
 #Register routes
 register:
@@ -67,6 +71,31 @@ getGameCards:
 addCard:
     service: App\Business\CardBusiness
     method: addCard
+
+# Shop routes
+checkUserDailyBooster:
+    service: App\Business\ShopBusiness
+    method: checkUserDailyBooster
+    
+getAvailableBoosters:
+    service: App\Business\ShopBusiness
+    method: getAvailableBoosters
+
+getDailyFreeBooster:
+    service: App\Business\ShopBusiness
+    method: getDailyFreeBooster
+
+getUserBoosters:
+    service: App\Business\ShopBusiness
+    method: getUserBoosters
+
+openUserBooster: 
+    service: App\Business\ShopBusiness
+    method: openUserBooster
+
+purchaseBoosters:
+    service: App\Business\ShopBusiness
+    method: purchaseBoosters
 
 #User routes
 getUsers:
