@@ -1,6 +1,7 @@
 # Amalgam
 Amalgam is websocket server created for supplied all the processes to run a video game inspired in [Triple Triad](https://finalfantasy.fandom.com/wiki/Triple_Triad).
-- [Releases](https://github.com/ogueta93/amalgam/releases) 
+- [Releases](https://github.com/ogueta93/amalgam/releases)
+- Live Version: [Amalgam](https://amalgam-showcase.vascoframework.es/)
 
 ## Application Frontend
 Amalgam supplies the backend side. You can get the front here: 
