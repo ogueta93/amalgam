@@ -64,3 +64,40 @@ To start the server execute the custom **ws:start** command in the root director
 ```
 php bin\console ws:start
 ```
+
+## SSL and Websockets
+If you build the fronted application and you want to use ssl or the PWA feature, you must to set Websocket connection using ssl.
+
+### 1. Get your certificates.
+You can get your certificates for free. [Let’s Encryp](https://letsencrypt.org/)
+
+### 2. Enable Apache2 modules
+```
+sudo ssl a2enmod proxy proxy_balancer proxy_wstunnel proxy_http
+```
+
+### 3. Configure your virtual host (Example)
+```
+<VirtualHost *:443>
+        ServerAdmin email@fake.com
+        ServerName mydomain.com
+        ServerAlias mydomain.com
+        DocumentRoot /var/www/{route_to_front_app}
+
+        <Directory "/var/www/{route_to_front_app}">
+               Options All
+               AllowOverride All
+               Require all granted
+        </Directory>
+
+        ErrorLog ${APACHE_LOG_DIR}/error.log
+        CustomLog ${APACHE_LOG_DIR}/access.log combined
+
+        SSLEngine on
+        SSLCertificateFile /{route_to__your_app_certificates_folder}/cert.pem
+        SSLCertificateKeyFile /{route_to__your_app_certificates_folder/privkey.pem
+        SSLCertificateChainFile /{route_to__your_app_certificates_folder/fullchain.pem
+        
+        ProxyPass /wss2/ ws://mydomain.com:8080/
+</VirtualHost>
+```
